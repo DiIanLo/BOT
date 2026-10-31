@@ -100,3 +100,21 @@ class TreasuryCashMovementTests(unittest.TestCase):
         for delta in (0, 1.5, True):
             with self.subTest(delta=delta), self.assertRaises(ValueError):
                 apply_treasury_cash_movement(treasury, "bad", delta)
+
+
+class BankReportTests(unittest.TestCase):
+    def test_report_includes_all_cash_flow_categories(self):
+        from bank_logic import summarize_transactions
+        rows = [
+            {"type": "savings_deposit", "amount": 500},
+            {"type": "savings_withdrawal", "amount": 100},
+            {"type": "fixed_deposit_opened", "amount": 1000},
+            {"type": "fixed_deposit_payout", "amount": 1100},
+            {"type": "credit_repayment", "amount": 200},
+            {"type": "credit_issued", "amount": 300},
+            {"type": "savings_interest", "amount": 20},
+            {"type": "treasury_expense", "amount": 50, "status": "pending"},
+        ]
+        self.assertEqual(summarize_transactions(rows), {
+            "incoming": 1700, "expenses": 1500, "savings_interest": 20,
+        })

@@ -22,6 +22,7 @@ from bank_logic import (
     deposit_interest,
     deposit_maturity,
     early_deposit_payout,
+    summarize_transactions,
 )
 
 ACCOUNTS_FILE = "bank_accounts.json"
@@ -529,9 +530,10 @@ def setup_bank_system(
         now = now_msk()
         since = now - timedelta(days=7) if period == "week" else now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         rows = [r for r in transactions["transactions"] if datetime.fromisoformat(r["at"]) >= since and r.get("status") == "confirmed"]
-        incoming = sum(int(r["amount"]) for r in rows if r["type"] in {"treasury_topup", "credit_repayment"})
-        expenses = sum(int(r["amount"]) for r in rows if r["type"] in {"treasury_expense", "credit_issued"})
-        interest_paid = sum(int(r["amount"]) for r in rows if r["type"] == "savings_interest")
+        totals = summarize_transactions(rows)
+        incoming = totals["incoming"]
+        expenses = totals["expenses"]
+        interest_paid = totals["savings_interest"]
         await ctx.send(f"**Отчёт за {'7 дней' if period == 'week' else '30 дней'}**\n"
             f"Поступления в казну и погашения кредитов: {incoming} алмазов\n"
             f"Расходы и выданные кредиты: {expenses} алмазов\n"

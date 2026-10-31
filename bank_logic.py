@@ -137,3 +137,16 @@ def apply_treasury_cash_movement(treasury: dict[str, Any], source_ref: str, delt
     treasury["treasury_balance"] = balance + delta
     posted.append(source_ref)
     return True
+
+
+
+def summarize_transactions(rows: list[dict[str, Any]]) -> dict[str, int]:
+    """Summarize confirmed bank cash flows for a reporting period."""
+    inflows = {"treasury_topup", "credit_repayment", "savings_deposit", "fixed_deposit_opened"}
+    outflows = {"treasury_expense", "credit_issued", "savings_withdrawal", "fixed_deposit_payout", "fixed_deposit_early_payout"}
+    confirmed = [row for row in rows if row.get("status", "confirmed") == "confirmed"]
+    return {
+        "incoming": sum(int(row.get("amount", 0)) for row in confirmed if row.get("type") in inflows),
+        "expenses": sum(int(row.get("amount", 0)) for row in confirmed if row.get("type") in outflows),
+        "savings_interest": sum(int(row.get("amount", 0)) for row in confirmed if row.get("type") == "savings_interest"),
+    }
