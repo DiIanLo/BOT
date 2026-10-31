@@ -52,3 +52,32 @@ def test_every_menu_command_has_a_description_and_all_guild_guides_exist():
     assert commands_in_menu == set(assignments["MENU_ACTION_HELP"])
     assert set(assignments["GUILD_GUIDES"]) == {"шахтёры", "архитекторы", "торговцы", "СОБР"}
     assert all(len(title) > 0 and len(body) > 300 for title, body in assignments["GUILD_GUIDES"].values())
+
+
+def test_main_menu_reuses_existing_message_and_removes_duplicate_panels():
+    root = Path(__file__).resolve().parents[1]
+    tree = ast.parse((root / "main.py").read_text(encoding="utf-8"))
+    functions = {
+        node.name: node for node in ast.walk(tree)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    upsert = functions["_upsert_main_menu"]
+    source = ast.get_source_segment((root / "main.py").read_text(encoding="utf-8"), upsert)
+    assert "ctx.channel.history(limit=100)" in source
+    assert "primary.edit" in source
+    assert "duplicate.delete()" in source
+    menu = functions["main_menu"]
+    menu_source = ast.get_source_segment((root / "main.py").read_text(encoding="utf-8"), menu)
+    assert "_upsert_main_menu(ctx)" in menu_source
+    assert "ctx.send(embed=build_main_menu_embed" not in menu_source
+
+
+def test_main_menu_view_does_not_add_legacy_placeholder_controls():
+    root = Path(__file__).resolve().parents[1]
+    tree = ast.parse((root / "main.py").read_text(encoding="utf-8"))
+    view = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "MainMenuView")
+    assert not any(
+        isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "add_item"
+        for node in ast.walk(view)
+    )

@@ -2705,9 +2705,7 @@ class MainMenuView(discord.ui.View):
     def __init__(self, creator_id: int):
         super().__init__(timeout=300)
         self.creator_id = creator_id
-        self.add_item(discord.ui.Button(label='👤 Личный кабинет', style=discord.ButtonStyle.secondary, custom_id='mainmenu_cabinet'))
-        self.add_item(discord.ui.Button(label='🎯 Мои квесты', style=discord.ButtonStyle.secondary, custom_id='mainmenu_myquests'))
-        # Role-sensitive controls are added by build_main_menu_view using the invoking member.
+        # All controls are created exactly once by build_main_menu_view().
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.creator_id:
@@ -2725,8 +2723,6 @@ def build_main_menu_embed(member) -> discord.Embed:
 
 def build_main_menu_view(member) -> discord.ui.View:
     view = MainMenuView(member.id)
-    # Replace generic buttons with callbacks that render useful responses.
-    view.clear_items()
     cabinet = discord.ui.Button(label='👤 Личный кабинет', style=discord.ButtonStyle.secondary, row=0)
     async def cabinet_cb(interaction: discord.Interaction):
         player = data.get('players', {}).get(str(interaction.user.id))
@@ -4397,12 +4393,53 @@ async def reset_vacation_cooldown(ctx, nick: str):
         await ctx.send(f'ℹ️ У **{nick}** нет кулдауна.')
 
 
+MAIN_MENU_EMBED_TITLES = {
+    '🧭 Главное меню RPG-бота',
+    'Главное меню RPG-бота',
+    'Главное меню',
+    'Панель управления RPG-бота',
+}
+
+
+async def _upsert_main_menu(ctx):
+    """Keep one main-menu message per channel instead of stacking old and new panels."""
+    embed = build_main_menu_embed(ctx.author)
+    view = build_main_menu_view(ctx.author)
+    existing = []
+    if bot.user is not None:
+        try:
+            async for message in ctx.channel.history(limit=100):
+                if message.author.id != bot.user.id or not message.embeds:
+                    continue
+                title = message.embeds[0].title
+                if title in MAIN_MENU_EMBED_TITLES:
+                    existing.append(message)
+        except discord.Forbidden:
+            # Without read-history permission, still provide the menu instead of failing.
+            existing = []
+
+    if existing:
+        primary = existing[0]
+        try:
+            await primary.edit(content=None, embed=embed, view=view)
+        except discord.HTTPException:
+            primary = await ctx.send(embed=embed, view=view)
+        for duplicate in existing[1:]:
+            try:
+                await duplicate.delete()
+            except discord.HTTPException:
+                pass
+        return primary
+
+    return await ctx.send(embed=embed, view=view)
+
+
 @bot.command(name='menu', aliases=['меню', 'панель'])
 async def main_menu(ctx):
-    """Открывает интерактивное меню игрока и руководителя."""
+    """Открывает или обновляет единственное интерактивное меню игрока и руководителя."""
     if not ctx.guild:
         return await ctx.send('❌ Меню доступно только на сервере Discord.')
-    await ctx.send(embed=build_main_menu_embed(ctx.author), view=build_main_menu_view(ctx.author))
+    await _upsert_main_menu(ctx)
 
 
 @bot.command(name='chelp', aliases=['help_bot', 'помощь'])
