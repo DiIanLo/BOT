@@ -2956,11 +2956,16 @@ class _MenuContextProxy:
         kwargs.pop('delete_after', None)
         kwargs.pop('reference', None)
         kwargs.pop('mention_author', None)
+        if embed is not None and embeds is not None:
+            raise ValueError("Передайте либо embed, либо embeds, но не оба аргумента.")
+        payload = {"content": content, "view": view, "ephemeral": ephemeral, **kwargs}
+        if embed is not None:
+            payload["embed"] = embed
+        elif embeds is not None:
+            payload["embeds"] = embeds
         if not self.interaction.response.is_done():
-            return await self.interaction.response.send_message(content=content, embed=embed, embeds=embeds,
-                view=view, ephemeral=ephemeral, **kwargs)
-        return await self.interaction.followup.send(content=content, embed=embed, embeds=embeds,
-            view=view, ephemeral=ephemeral, **kwargs)
+            return await self.interaction.response.send_message(**payload)
+        return await self.interaction.followup.send(**payload)
 
 
 GUILD_GUIDES = {

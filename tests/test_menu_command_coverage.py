@@ -81,3 +81,17 @@ def test_main_menu_view_does_not_add_legacy_placeholder_controls():
         and node.func.attr == "add_item"
         for node in ast.walk(view)
     )
+
+
+def test_menu_context_proxy_does_not_mix_embed_and_embeds_keywords():
+    root = Path(__file__).resolve().parents[1]
+    source = (root / "main.py").read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    proxy = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "_MenuContextProxy")
+    send = next(node for node in proxy.body if isinstance(node, ast.AsyncFunctionDef) and node.name == "send")
+    segment = ast.get_source_segment(source, send)
+    assert 'payload["embed"] = embed' in segment
+    assert 'payload["embeds"] = embeds' in segment
+    assert "send_message(**payload)" in segment
+    assert "followup.send(**payload)" in segment
+    assert "embed=embed, embeds=embeds" not in segment
