@@ -1,0 +1,32 @@
+{
+    "custom_PKYCAC": {
+        "name": "Глубинное исследование",
+        "description": "Добыть 15 алмазной руды шёлковым касанием. По поводу зарплаты обращаться к stupapupnik",
+        "bonus": 0.0,
+        "time_limit": 7200,
+        "category": "📋 Свои",
+        "type": "weekly",
+        "mode": "individual",
+        "reward_diamonds": 5,
+        "reward_xp": 2,
+        "reward_type": "diamonds_xp",
+        "creator_id": 578963368296185857,
+        "created_at": "2026-10-27T10:53:20.353258",
+        "is_custom": true
+    },
+    "custom_RXWEZ3": {
+        "name": "Вкусно и точка",
+        "description": "Подготовить 2 чанка для проекта. За подробностями о том где и до куда к stupapupnik. Расчистка более 2 чанков не подлежит к оплате, более будет считаться лично инициативой. По поводу оплаты обращаться к stupapupnik",
+        "bonus": 10.0,
+        "time_limit": 7200,
+        "category": "📋 Свои",
+        "type": "weekly",
+        "mode": "individual",
+        "reward_diamonds": 10,
+        "reward_xp": 4,
+        "reward_type": "diamonds_xp",
+        "creator_id": 578963368296185857,
+        "created_at": "2026-10-27T10:55:15.844816",
+        "is_custom": true
+    }
+}

@@ -1,0 +1,49 @@
+{
+    "transactions": [
+        {
+            "id": "1",
+            "at": "2026-10-22T20:04:39",
+            "type": "treasury_topup",
+            "amount": 640,
+            "actor_id": "692656710694731817",
+            "owner_id": null,
+            "details": "пополнение; физическое поступление подтверждено",
+            "status": "confirmed",
+            "source_ref": "treasury-add:2026-10-22T20:04:39:692656710694731817"
+        },
+        {
+            "id": "2",
+            "at": "2026-10-22T20:14:50",
+            "type": "treasury_to_reserve",
+            "amount": 384,
+            "actor_id": "692656710694731817",
+            "owner_id": null,
+            "details": "на начало",
+            "status": "confirmed",
+            "source_ref": "treasury_to_reserve:2026-10-22T20:14:50:692656710694731817"
+        },
+        {
+            "id": "3",
+            "at": "2026-10-22T20:15:48",
+            "type": "treasury_topup",
+            "amount": 384,
+            "actor_id": "692656710694731817",
+            "owner_id": null,
+            "details": "пополнение; физическое поступление подтверждено",
+            "status": "confirmed",
+            "source_ref": "treasury-add:2026-10-22T20:15:48:692656710694731817"
+        },
+        {
+            "id": "4",
+            "at": "2026-10-25T00:35:13",
+            "type": "savings_deposit",
+            "amount": 2000,
+            "actor_id": "1027164181297909851",
+            "owner_id": "692608814838710292",
+            "details": "изи деньги",
+            "status": "confirmed",
+            "source_ref": "savings-deposit:2:2026-10-25T00:35:13:1027164181297909851"
+        }
+    ],
+    "next_id": 5
+}

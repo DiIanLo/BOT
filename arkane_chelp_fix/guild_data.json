@@ -1,0 +1,49 @@
+ {
+    "players": {
+        "832636016976199720": {
+            "minecraft_nick": "fobos96",
+            "discord_id": 832636016976199720,
+            "guild": "шахтёры",
+            "rank": "F",
+            "completed_tasks": 1,
+            "rank_points": 100,
+            "quest_bonus": 0.0,
+            "joined_date": "2026-10-20T11:01:48.309302"
+        },
+        "578963368296185857": {
+            "minecraft_nick": "stupapupnik",
+            "discord_id": 578963368296185857,
+            "guild": "шахтёры",
+            "rank": "S",
+            "completed_tasks": 2,
+            "rank_points": 2000,
+            "quest_bonus": 0.0,
+            "joined_date": "2026-10-20T11:31:32.348635"
+        },
+        "1476639184448917614": {
+            "minecraft_nick": "qwerfddd",
+            "discord_id": 1476639184448917614,
+            "guild": "торговцы",
+            "rank": "F",
+            "completed_tasks": 1,
+            "rank_points": 1,
+            "quest_bonus": 0.0,
+            "joined_date": "2026-10-20T11:39:55.560458"
+        }
+    },
+    "registered_users": [
+        832636016976199720,
+        578963368296185857,
+        1476639184448917614
+    ],
+    "selection_messages": {},
+    "temp_nick": {},
+    "invite_codes": {},
+    "temp_code": {},
+    "quests": {},
+    "player_quests": {},
+    "weekly_history": {},
+    "vacations": {},
+    "vacation_cooldowns": {},
+    "last_reset_week": "2026-W43"
+}

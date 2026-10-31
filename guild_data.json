@@ -1,0 +1,424 @@
+{
+    "players": {
+        "832636016976199720": {
+            "minecraft_nick": "fobos96",
+            "discord_id": 832636016976199720,
+            "guild": "шахтёры",
+            "rank": "S",
+            "completed_tasks": 0,
+            "rank_points": 0,
+            "quest_bonus": 0.0,
+            "joined_date": "2026-10-20T11:01:48.309302",
+            "lifetime_quests_completed": 1,
+            "achievements": [
+                "points_100"
+            ],
+            "unlocked_titles": [
+                "climber"
+            ],
+            "active_title": "climber",
+            "weekly_salary_base": 0.0
+        },
+        "578963368296185857": {
+            "minecraft_nick": "stupapupnik",
+            "discord_id": 578963368296185857,
+            "guild": "шахтёры",
+            "rank": "S",
+            "completed_tasks": 0,
+            "rank_points": 1400,
+            "quest_bonus": 0.0,
+            "joined_date": "2026-10-20T11:31:32.348635",
+            "weekly_salary_base": 0.0
+        },
+        "1476639184448917614": {
+            "minecraft_nick": "qwerfddd",
+            "discord_id": 1476639184448917614,
+            "guild": "торговцы",
+            "rank": "F",
+            "completed_tasks": 0,
+            "rank_points": 1,
+            "quest_bonus": 0.0,
+            "joined_date": "2026-10-20T11:39:55.560458",
+            "weekly_salary_base": 0.0
+        },
+        "1028315057072918569": {
+            "minecraft_nick": "tokku",
+            "discord_id": 1028315057072918569,
+            "guild": "архитекторы",
+            "rank": "F",
+            "completed_tasks": 0,
+            "rank_points": 0,
+            "quest_bonus": 0.0,
+            "weekly_salary_base": 0.0,
+            "joined_date": "2026-10-24T20:02:06.366485"
+        },
+        "707889549774159892": {
+            "minecraft_nick": "mihalech2",
+            "discord_id": 707889549774159892,
+            "guild": "архитекторы",
+            "rank": "F",
+            "completed_tasks": 0,
+            "rank_points": 0,
+            "quest_bonus": 0.0,
+            "weekly_salary_base": 0.0,
+            "joined_date": "2026-10-24T20:35:15.596252"
+        },
+        "1406271441069936853": {
+            "minecraft_nick": "Ymi_Teto",
+            "discord_id": 1406271441069936853,
+            "guild": "шахтёры",
+            "rank": "F",
+            "completed_tasks": 0,
+            "rank_points": 0,
+            "quest_bonus": 0.0,
+            "weekly_salary_base": 0.0,
+            "joined_date": "2026-10-24T21:52:31.077941"
+        },
+        "1337024188896251904": {
+            "minecraft_nick": "CMFRHTb",
+            "discord_id": 1337024188896251904,
+            "guild": "шахтёры",
+            "rank": "F",
+            "completed_tasks": 0,
+            "rank_points": 0,
+            "quest_bonus": 0.0,
+            "weekly_salary_base": 0.0,
+            "joined_date": "2026-10-24T21:53:56.705597"
+        },
+        "869887171807572038": {
+            "minecraft_nick": "Leva_KAPAC",
+            "discord_id": 869887171807572038,
+            "guild": "шахтёры",
+            "rank": "F",
+            "completed_tasks": 0,
+            "rank_points": 0,
+            "quest_bonus": 0.0,
+            "weekly_salary_base": 0.0,
+            "joined_date": "2026-10-24T21:55:44.619819"
+        },
+        "692608814838710292": {
+            "minecraft_nick": "_wmvx_",
+            "discord_id": 692608814838710292,
+            "guild": "торговцы",
+            "rank": "F",
+            "completed_tasks": 0,
+            "rank_points": 0,
+            "quest_bonus": 0.0,
+            "weekly_salary_base": 0.0,
+            "joined_date": "2026-10-25T00:16:58.941986"
+        },
+        "692656710694731817": {
+            "minecraft_nick": "KALbIBAN_",
+            "discord_id": 692656710694731817,
+            "guild": null,
+            "rank": "F",
+            "completed_tasks": 0,
+            "rank_points": 0,
+            "quest_bonus": 0.0,
+            "weekly_salary_base": 0.0,
+            "joined_date": "2026-10-25T00:25:10.629260"
+        },
+        "1132730600768413696": {
+            "minecraft_nick": "FreysAnatomy",
+            "discord_id": 1132730600768413696,
+            "guild": "шахтёры",
+            "rank": "F",
+            "completed_tasks": 0,
+            "rank_points": 0,
+            "quest_bonus": 0.0,
+            "weekly_salary_base": 0.0,
+            "joined_date": "2026-10-27T16:05:44.236936"
+        }
+    },
+    "registered_users": [
+        832636016976199720,
+        578963368296185857,
+        1476639184448917614,
+        1028315057072918569,
+        707889549774159892,
+        1406271441069936853,
+        1337024188896251904,
+        869887171807572038,
+        692608814838710292,
+        692656710694731817,
+        1132730600768413696
+    ],
+    "selection_messages": {},
+    "temp_nick": {},
+    "invite_codes": {},
+    "temp_code": {},
+    "quests": {
+        "SF66NK": {
+            "guild": "шахтёры",
+            "name": "💰 Продать 100 предметов",
+            "description": "Продайте 100 любых предметов торговцу",
+            "type": "weekly",
+            "bonus": 8.0,
+            "time_limit_minutes": 720,
+            "creator_id": 0,
+            "created_at": "2026-10-26T09:00:39.457772",
+            "thread_id": 1564156785848492072,
+            "message_id": 1564156785848492072,
+            "status": "closed",
+            "mode": "individual",
+            "template_id": "trade_items",
+            "scheduled_auto": true,
+            "schedule_period": "2026-W44",
+            "reward_type": "salary_only",
+            "reward_diamonds": 0,
+            "reward_xp": 0
+        },
+        "98SCDU": {
+            "guild": "шахтёры",
+            "name": "🌾 Построить ферму",
+            "description": "Постройте автоматическую ферму",
+            "type": "weekly",
+            "bonus": 25.0,
+            "time_limit_minutes": 2880,
+            "creator_id": 0,
+            "created_at": "2026-10-26T09:00:40.611996",
+            "thread_id": 1564156791154024539,
+            "message_id": 1564156791154024539,
+            "status": "closed",
+            "mode": "individual",
+            "template_id": "build_farm",
+            "scheduled_auto": true,
+            "schedule_period": "2026-W44",
+            "reward_type": "salary_only",
+            "reward_diamonds": 0,
+            "reward_xp": 0
+        },
+        "AXDMB5": {
+            "guild": "шахтёры",
+            "name": "🏠 Построить дом",
+            "description": "Постройте дом размером минимум 10x10",
+            "type": "weekly",
+            "bonus": 20.0,
+            "time_limit_minutes": 2880,
+            "creator_id": 0,
+            "created_at": "2026-10-26T09:00:41.851585",
+            "thread_id": 1564156796279463936,
+            "message_id": 1564156796279463936,
+            "status": "closed",
+            "mode": "individual",
+            "template_id": "build_house",
+            "scheduled_auto": true,
+            "schedule_period": "2026-W44",
+            "reward_type": "salary_only",
+            "reward_diamonds": 0,
+            "reward_xp": 0
+        },
+        "3FNRDJ": {
+            "guild": "шахтёры",
+            "name": "Запрос союзников",
+            "description": "Раскопать закреплённые 2 чанка у клана BA$$. За подробностями где и сколько копать обращаться к @helsinki (этот человек есть на дискорд сервере). Раскопка более 2 закреплённых чанков не подлежит оплате, более будет являться личной инициативой. За оплатой труда обращаться к stupapupnik",
+            "type": "once",
+            "bonus": 0.0,
+            "time_limit_minutes": 7200,
+            "creator_id": 578963368296185857,
+            "mode": "individual",
+            "reward_diamonds": 10,
+            "reward_xp": 4,
+            "reward_type": "diamonds_xp",
+            "created_at": "2026-10-27T10:59:56.040887",
+            "thread_id": 1564549191114555428,
+            "message_id": 1564549191114555428,
+            "status": "active"
+        },
+        "U7EN52": {
+            "guild": "шахтёры",
+            "name": "Вкусно и точка",
+            "description": "Подготовить 2 чанка для проекта. За подробностями о том где и до куда к stupapupnik. Расчистка более 2 чанков не подлежит к оплате, более будет считаться лично инициативой. По поводу оплаты обращаться к stupapupnik",
+            "type": "once",
+            "bonus": 3.0,
+            "time_limit_minutes": 7200,
+            "creator_id": 578963368296185857,
+            "mode": "individual",
+            "reward_diamonds": 10,
+            "reward_xp": 4,
+            "reward_type": "diamonds_xp",
+            "created_at": "2026-10-27T11:00:31.373745",
+            "thread_id": 1564549338766639146,
+            "message_id": 1564549338766639146,
+            "status": "active"
+        },
+        "M6WZH6": {
+            "guild": "шахтёры",
+            "name": "Глубинное исследование",
+            "description": "Добыть 15 алмазной руды шёлковым касанием. По поводу зарплаты обращаться к stupapupnik",
+            "type": "once",
+            "bonus": 0.0,
+            "time_limit_minutes": 7200,
+            "creator_id": 578963368296185857,
+            "mode": "individual",
+            "reward_diamonds": 5,
+            "reward_xp": 2,
+            "reward_type": "diamonds_xp",
+            "created_at": "2026-10-27T11:01:05.710867",
+            "thread_id": 1564549482912415901,
+            "message_id": 1564549482912415901,
+            "status": "closed"
+        },
+        "CFWSFA": {
+            "guild": "торговцы",
+            "name": "Работа в банке",
+            "description": "принимать людей и выдавать кредит , накопительный счет , вклад",
+            "type": "daily",
+            "bonus": 5.0,
+            "time_limit_minutes": 90,
+            "creator_id": 1027164181297909851,
+            "mode": "individual",
+            "reward_diamonds": 5,
+            "reward_xp": 5,
+            "reward_type": "diamonds_xp",
+            "created_at": "2026-10-27T19:45:14.213687",
+            "thread_id": 1564681386785378386,
+            "message_id": 1564681386785378386,
+            "status": "active"
+        }
+    },
+    "player_quests": {
+        "M6WZH6": {
+            "832636016976199720": {
+                "taken_at": "2026-10-27T15:44:39.769715",
+                "status": "taken"
+            },
+            "869887171807572038": {
+                "taken_at": "2026-10-27T19:03:34.624819",
+                "status": "taken"
+            }
+        },
+        "U7EN52": {
+            "832636016976199720": {
+                "taken_at": "2026-10-27T15:45:03.310997",
+                "status": "taken"
+            },
+            "869887171807572038": {
+                "taken_at": "2026-10-27T19:03:36.184650",
+                "status": "taken"
+            }
+        },
+        "3FNRDJ": {
+            "1132730600768413696": {
+                "taken_at": "2026-10-27T16:06:10.056702",
+                "status": "taken"
+            },
+            "869887171807572038": {
+                "taken_at": "2026-10-27T19:03:38.489935",
+                "status": "taken"
+            }
+        }
+    },
+    "weekly_history": {
+        "2026-W43": {
+            "week": "2026-W43",
+            "date": "26.10.2026",
+            "players": {
+                "832636016976199720": {
+                    "nick": "fobos96",
+                    "guild": "шахтёры",
+                    "rank": "S",
+                    "points": 0,
+                    "tasks": 1,
+                    "quest_bonus": 25.0,
+                    "salary": 100.0,
+                    "on_vacation": false
+                },
+                "578963368296185857": {
+                    "nick": "stupapupnik",
+                    "guild": "шахтёры",
+                    "rank": "S",
+                    "points": 1400,
+                    "tasks": 2,
+                    "quest_bonus": 0,
+                    "salary": 160.0,
+                    "on_vacation": false
+                },
+                "1476639184448917614": {
+                    "nick": "qwerfddd",
+                    "guild": "торговцы",
+                    "rank": "F",
+                    "points": 1,
+                    "tasks": 1,
+                    "quest_bonus": 0.0,
+                    "salary": 2.0,
+                    "on_vacation": false
+                },
+                "1028315057072918569": {
+                    "nick": "tokku",
+                    "guild": "архитекторы",
+                    "rank": "F",
+                    "points": 0,
+                    "tasks": 0,
+                    "quest_bonus": 0.0,
+                    "salary": 0.0,
+                    "on_vacation": false
+                },
+                "707889549774159892": {
+                    "nick": "mihalech2",
+                    "guild": "архитекторы",
+                    "rank": "F",
+                    "points": 0,
+                    "tasks": 0,
+                    "quest_bonus": 0.0,
+                    "salary": 0.0,
+                    "on_vacation": false
+                },
+                "1406271441069936853": {
+                    "nick": "Ymi_Teto",
+                    "guild": "шахтёры",
+                    "rank": "F",
+                    "points": 0,
+                    "tasks": 0,
+                    "quest_bonus": 0.0,
+                    "salary": 0.0,
+                    "on_vacation": false
+                },
+                "1337024188896251904": {
+                    "nick": "CMFRHTb",
+                    "guild": "шахтёры",
+                    "rank": "F",
+                    "points": 0,
+                    "tasks": 0,
+                    "quest_bonus": 0.0,
+                    "salary": 0.0,
+                    "on_vacation": false
+                },
+                "869887171807572038": {
+                    "nick": "Leva_KAPAC",
+                    "guild": "шахтёры",
+                    "rank": "F",
+                    "points": 0,
+                    "tasks": 0,
+                    "quest_bonus": 0.0,
+                    "salary": 0.0,
+                    "on_vacation": false
+                },
+                "692608814838710292": {
+                    "nick": "_wmvx_",
+                    "guild": "торговцы",
+                    "rank": "F",
+                    "points": 0,
+                    "tasks": 0,
+                    "quest_bonus": 0.0,
+                    "salary": 0.0,
+                    "on_vacation": false
+                },
+                "692656710694731817": {
+                    "nick": "KALbIBAN_",
+                    "guild": null,
+                    "rank": "F",
+                    "points": 0,
+                    "tasks": 0,
+                    "quest_bonus": 0.0,
+                    "salary": 0.0,
+                    "on_vacation": false
+                }
+            }
+        }
+    },
+    "vacations": {},
+    "vacation_cooldowns": {},
+    "last_reset_week": "2026-W44",
+    "temp_individual_registration": {}
+}

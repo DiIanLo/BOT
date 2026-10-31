@@ -1,0 +1,14 @@
+{
+    "шахтёры": {
+        "weekly": {
+            "enabled": true,
+            "publish_day": "mon",
+            "publish_time": "09:00",
+            "close_day": "sat",
+            "close_time": "22:00",
+            "count": 3,
+            "last_publish_period": "2026-W44",
+            "last_close_period": null
+        }
+    }
+}

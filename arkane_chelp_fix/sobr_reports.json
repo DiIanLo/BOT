@@ -1,0 +1,13 @@
+{
+    "next_report_id": 1,
+    "next_violation_id": 1,
+    "next_fine_id": 1,
+    "reports": {},
+    "dossiers": {},
+    "violations": {},
+    "fines": {},
+    "inventory_latest": {},
+    "weekly_passport_reports": [],
+    "last_passport_report_week": null,
+    "private_channel_id": null
+}

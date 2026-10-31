@@ -1,0 +1,11 @@
+{
+    "users": {},
+    "staff": [],
+    "service_channel_id": null,
+    "limits": {
+        "7": {"min": 448, "max": 700},
+        "14": {"min": 896, "max": 3200},
+        "30": {"min": 4480, "max": null}
+    },
+    "audit": []
+}

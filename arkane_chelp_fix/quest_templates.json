@@ -1,0 +1,148 @@
+{
+    "mining_diamond": {
+        "name": "💎 Добыть 64 алмаза",
+        "description": "Добудьте 64 алмаза в шахте",
+        "bonus": 15,
+        "time_limit": 1440,
+        "category": "⛏️ Добыча",
+        "type": "weekly",
+        "reward_diamonds": 0,
+        "reward_xp": 0,
+        "reward_type": "salary_only"
+    },
+    "mining_iron": {
+        "name": "⛏️ Добыть 128 железа",
+        "description": "Добудьте 128 железной руды",
+        "bonus": 10,
+        "time_limit": 720,
+        "category": "⛏️ Добыча",
+        "type": "weekly",
+        "reward_diamonds": 0,
+        "reward_xp": 0,
+        "reward_type": "salary_only"
+    },
+    "build_house": {
+        "name": "🏠 Построить дом",
+        "description": "Постройте дом размером минимум 10x10",
+        "bonus": 20,
+        "time_limit": 2880,
+        "category": "🏗️ Строительство",
+        "type": "weekly",
+        "reward_diamonds": 0,
+        "reward_xp": 0,
+        "reward_type": "salary_only"
+    },
+    "build_farm": {
+        "name": "🌾 Построить ферму",
+        "description": "Постройте автоматическую ферму",
+        "bonus": 25,
+        "time_limit": 2880,
+        "category": "🏗️ Строительство",
+        "type": "weekly",
+        "reward_diamonds": 0,
+        "reward_xp": 0,
+        "reward_type": "salary_only"
+    },
+    "kill_mobs": {
+        "name": "⚔️ Убить 50 мобов",
+        "description": "Убейте 50 враждебных мобов",
+        "bonus": 10,
+        "time_limit": 720,
+        "category": "⚔️ Бой",
+        "type": "daily",
+        "reward_diamonds": 0,
+        "reward_xp": 0,
+        "reward_type": "salary_only"
+    },
+    "kill_boss": {
+        "name": "🐉 Убить босса",
+        "description": "Убейте дракона Края или Иссушителя",
+        "bonus": 30,
+        "time_limit": 1440,
+        "category": "⚔️ Бой",
+        "type": "weekly",
+        "reward_diamonds": 0,
+        "reward_xp": 0,
+        "reward_type": "salary_only"
+    },
+    "explore_village": {
+        "name": "🧭 Найти деревню",
+        "description": "Найдите и отметьте координаты деревни",
+        "bonus": 8,
+        "time_limit": 360,
+        "category": "🧭 Исследование",
+        "type": "daily",
+        "reward_diamonds": 0,
+        "reward_xp": 0,
+        "reward_type": "salary_only"
+    },
+    "explore_biome": {
+        "name": "🗺️ Найти биом",
+        "description": "Найдите редкий биом (грибной остров, багровый лес)",
+        "bonus": 12,
+        "time_limit": 720,
+        "category": "🧭 Исследование",
+        "type": "weekly",
+        "reward_diamonds": 0,
+        "reward_xp": 0,
+        "reward_type": "salary_only"
+    },
+    "trade_items": {
+        "name": "💰 Продать 100 предметов",
+        "description": "Продайте 100 любых предметов торговцу",
+        "bonus": 8,
+        "time_limit": 720,
+        "category": "💰 Торговля",
+        "type": "weekly",
+        "reward_diamonds": 0,
+        "reward_xp": 0,
+        "reward_type": "salary_only"
+    },
+    "craft_armor": {
+        "name": "🛡️ Скрафтить алмазную броню",
+        "description": "Создайте полный сет алмазной брони",
+        "bonus": 20,
+        "time_limit": 1440,
+        "category": "🛠️ Крафт",
+        "type": "weekly",
+        "reward_diamonds": 0,
+        "reward_xp": 0,
+        "reward_type": "salary_only"
+    },
+    "guard_patrol": {
+        "name": "🛡️ Патруль территории",
+        "description": "Патрулируйте территорию города 30 минут",
+        "bonus": 10,
+        "time_limit": 60,
+        "category": "🛡️ СОБР",
+        "type": "daily",
+        "reward_diamonds": 0,
+        "reward_xp": 0,
+        "reward_type": "salary_only"
+    },
+    "guard_catch": {
+        "name": "🚔 Поймать нарушителя",
+        "description": "Поймайте нарушителя порядка на территории",
+        "bonus": 20,
+        "time_limit": 1440,
+        "category": "🛡️ СОБР",
+        "type": "weekly",
+        "reward_diamonds": 0,
+        "reward_xp": 0,
+        "reward_type": "salary_only"
+    },
+    "custom_S6X2TF": {
+        "name": "GG",
+        "description": "1000 алмазов на счёт",
+        "bonus": 9999.0,
+        "time_limit": 1,
+        "category": "📋 Свои",
+        "type": "weekly",
+        "creator_id": 578963368296185857,
+        "created_at": "2026-10-20T11:26:38.943383",
+        "is_custom": true,
+        "reward_diamonds": 0,
+        "reward_xp": 0,
+        "reward_type": "salary_only"
+    }
+}

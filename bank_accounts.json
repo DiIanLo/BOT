@@ -1,0 +1,33 @@
+{
+    "accounts": {
+        "1": {
+            "id": "1",
+            "owner_id": "692656710694731817",
+            "minecraft_nick": "KALbIBAN_",
+            "mode": "no_topups",
+            "rate": 0.14,
+            "balance": 0,
+            "month_interest": 0.0,
+            "created_at": "2026-10-25T00:26:54",
+            "last_accrual_at": "2026-10-25T00:26:54",
+            "last_visit_at": null,
+            "status": "pending_funding",
+            "withdrawal_count": 0
+        },
+        "2": {
+            "id": "2",
+            "owner_id": "692608814838710292",
+            "minecraft_nick": "_wmvx_",
+            "mode": "no_topups",
+            "rate": 0.14,
+            "balance": 2000,
+            "month_interest": 58.49322227,
+            "created_at": "2026-10-25T00:31:45",
+            "last_accrual_at": "2026-10-31T12:00:39",
+            "last_visit_at": "2026-10-25T00:35:13",
+            "status": "active",
+            "withdrawal_count": 0
+        }
+    },
+    "next_id": 3
+}

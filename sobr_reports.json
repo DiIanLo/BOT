@@ -1,0 +1,211 @@
+{
+    "next_report_id": 2,
+    "next_violation_id": 1,
+    "next_fine_id": 1,
+    "reports": {
+        "1": {
+            "id": "1",
+            "type": "Еженедельный отчёт о паспортах",
+            "grounds": "Еженедельная сверка регистраций и проверок паспортов",
+            "content": "Зарегистрированных: 10; проверок за неделю: 0.",
+            "author_id": "system",
+            "author_name": "Автоматизация СОБР",
+            "author_rank": "system",
+            "created_at": "2026-10-26T10:00:38",
+            "completed_at": "2026-10-26T10:00",
+            "participants": [
+                {
+                    "discord_id": "692608814838710292",
+                    "minecraft_nick": "_wmvx_",
+                    "display_name": "_wmvx_"
+                },
+                {
+                    "discord_id": "1337024188896251904",
+                    "minecraft_nick": "CMFRHTb",
+                    "display_name": "CMFRHTb"
+                },
+                {
+                    "discord_id": "832636016976199720",
+                    "minecraft_nick": "fobos96",
+                    "display_name": "fobos96"
+                },
+                {
+                    "discord_id": "692656710694731817",
+                    "minecraft_nick": "KALbIBAN_",
+                    "display_name": "KALbIBAN_"
+                },
+                {
+                    "discord_id": "869887171807572038",
+                    "minecraft_nick": "Leva_KAPAC",
+                    "display_name": "Leva_KAPAC"
+                },
+                {
+                    "discord_id": "707889549774159892",
+                    "minecraft_nick": "mihalech2",
+                    "display_name": "mihalech2"
+                },
+                {
+                    "discord_id": "1476639184448917614",
+                    "minecraft_nick": "qwerfddd",
+                    "display_name": "qwerfddd"
+                },
+                {
+                    "discord_id": "578963368296185857",
+                    "minecraft_nick": "stupapupnik",
+                    "display_name": "stupapupnik"
+                },
+                {
+                    "discord_id": "1028315057072918569",
+                    "minecraft_nick": "tokku",
+                    "display_name": "tokku"
+                },
+                {
+                    "discord_id": "1406271441069936853",
+                    "minecraft_nick": "Ymi_Teto",
+                    "display_name": "Ymi_Teto"
+                }
+            ],
+            "offenders": [],
+            "status": "зафиксирован",
+            "corrections": [],
+            "inventory": null,
+            "passport_week": "2026-10-19",
+            "registered_count": 10,
+            "checked_passports_count": 0
+        }
+    },
+    "dossiers": {
+        "692608814838710292": [
+            {
+                "entry_id": "report:1",
+                "kind": "report",
+                "report_id": "1",
+                "type": "Еженедельный отчёт о паспортах",
+                "grounds": "Еженедельная сверка регистраций и проверок паспортов",
+                "created_at": "2026-10-26T10:00:38",
+                "completed_at": "2026-10-26T10:00",
+                "status": "зафиксирован"
+            }
+        ],
+        "1337024188896251904": [
+            {
+                "entry_id": "report:1",
+                "kind": "report",
+                "report_id": "1",
+                "type": "Еженедельный отчёт о паспортах",
+                "grounds": "Еженедельная сверка регистраций и проверок паспортов",
+                "created_at": "2026-10-26T10:00:38",
+                "completed_at": "2026-10-26T10:00",
+                "status": "зафиксирован"
+            }
+        ],
+        "832636016976199720": [
+            {
+                "entry_id": "report:1",
+                "kind": "report",
+                "report_id": "1",
+                "type": "Еженедельный отчёт о паспортах",
+                "grounds": "Еженедельная сверка регистраций и проверок паспортов",
+                "created_at": "2026-10-26T10:00:38",
+                "completed_at": "2026-10-26T10:00",
+                "status": "зафиксирован"
+            }
+        ],
+        "692656710694731817": [
+            {
+                "entry_id": "report:1",
+                "kind": "report",
+                "report_id": "1",
+                "type": "Еженедельный отчёт о паспортах",
+                "grounds": "Еженедельная сверка регистраций и проверок паспортов",
+                "created_at": "2026-10-26T10:00:38",
+                "completed_at": "2026-10-26T10:00",
+                "status": "зафиксирован"
+            }
+        ],
+        "869887171807572038": [
+            {
+                "entry_id": "report:1",
+                "kind": "report",
+                "report_id": "1",
+                "type": "Еженедельный отчёт о паспортах",
+                "grounds": "Еженедельная сверка регистраций и проверок паспортов",
+                "created_at": "2026-10-26T10:00:38",
+                "completed_at": "2026-10-26T10:00",
+                "status": "зафиксирован"
+            }
+        ],
+        "707889549774159892": [
+            {
+                "entry_id": "report:1",
+                "kind": "report",
+                "report_id": "1",
+                "type": "Еженедельный отчёт о паспортах",
+                "grounds": "Еженедельная сверка регистраций и проверок паспортов",
+                "created_at": "2026-10-26T10:00:38",
+                "completed_at": "2026-10-26T10:00",
+                "status": "зафиксирован"
+            }
+        ],
+        "1476639184448917614": [
+            {
+                "entry_id": "report:1",
+                "kind": "report",
+                "report_id": "1",
+                "type": "Еженедельный отчёт о паспортах",
+                "grounds": "Еженедельная сверка регистраций и проверок паспортов",
+                "created_at": "2026-10-26T10:00:38",
+                "completed_at": "2026-10-26T10:00",
+                "status": "зафиксирован"
+            }
+        ],
+        "578963368296185857": [
+            {
+                "entry_id": "report:1",
+                "kind": "report",
+                "report_id": "1",
+                "type": "Еженедельный отчёт о паспортах",
+                "grounds": "Еженедельная сверка регистраций и проверок паспортов",
+                "created_at": "2026-10-26T10:00:38",
+                "completed_at": "2026-10-26T10:00",
+                "status": "зафиксирован"
+            }
+        ],
+        "1028315057072918569": [
+            {
+                "entry_id": "report:1",
+                "kind": "report",
+                "report_id": "1",
+                "type": "Еженедельный отчёт о паспортах",
+                "grounds": "Еженедельная сверка регистраций и проверок паспортов",
+                "created_at": "2026-10-26T10:00:38",
+                "completed_at": "2026-10-26T10:00",
+                "status": "зафиксирован"
+            }
+        ],
+        "1406271441069936853": [
+            {
+                "entry_id": "report:1",
+                "kind": "report",
+                "report_id": "1",
+                "type": "Еженедельный отчёт о паспортах",
+                "grounds": "Еженедельная сверка регистраций и проверок паспортов",
+                "created_at": "2026-10-26T10:00:38",
+                "completed_at": "2026-10-26T10:00",
+                "status": "зафиксирован"
+            }
+        ]
+    },
+    "violations": {},
+    "fines": {},
+    "inventory_latest": {},
+    "weekly_passport_reports": [
+        {
+            "report_id": "1",
+            "week": "2026-10-19",
+            "created_at": "2026-10-26T10:00:38"
+        }
+    ],
+    "last_passport_report_week": "2026-10-19",
+    "private_channel_id": 1562735594877091840
+}

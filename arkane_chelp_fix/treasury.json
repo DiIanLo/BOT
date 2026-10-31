@@ -1,0 +1,9 @@
+{
+    "treasury_balance": 0,
+    "reserve_balance": 0,
+    "staff": [],
+    "posted_sources": [],
+    "pending_expenses": {},
+    "next_expense_id": 1,
+    "last_daily_check": null
+}

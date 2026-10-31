@@ -1,0 +1,12 @@
+{
+    "treasury_balance": 640,
+    "reserve_balance": 384,
+    "staff": [
+        "1027164181297909851",
+        "1476639184448917614"
+    ],
+    "posted_sources": [],
+    "pending_expenses": {},
+    "next_expense_id": 1,
+    "last_daily_check": "2026-10-31"
+}
