@@ -69,3 +69,34 @@ class SavingsAccrualTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TreasuryCashMovementTests(unittest.TestCase):
+    def test_incoming_cash_increases_treasury_and_is_idempotent(self):
+        from bank_logic import apply_treasury_cash_movement
+        treasury = {"treasury_balance": 100, "posted_sources": []}
+        self.assertTrue(apply_treasury_cash_movement(treasury, "deposit:1", 500))
+        self.assertEqual(treasury["treasury_balance"], 600)
+        self.assertFalse(apply_treasury_cash_movement(treasury, "deposit:1", 500))
+        self.assertEqual(treasury["treasury_balance"], 600)
+
+    def test_outgoing_cash_decreases_treasury(self):
+        from bank_logic import apply_treasury_cash_movement
+        treasury = {"treasury_balance": 700, "posted_sources": []}
+        self.assertTrue(apply_treasury_cash_movement(treasury, "payout:1", -650))
+        self.assertEqual(treasury["treasury_balance"], 50)
+
+    def test_cash_payout_cannot_make_treasury_negative(self):
+        from bank_logic import apply_treasury_cash_movement
+        treasury = {"treasury_balance": 100, "posted_sources": []}
+        with self.assertRaises(ValueError):
+            apply_treasury_cash_movement(treasury, "payout:1", -101)
+        self.assertEqual(treasury["treasury_balance"], 100)
+        self.assertEqual(treasury["posted_sources"], [])
+
+    def test_invalid_or_zero_movements_are_rejected(self):
+        from bank_logic import apply_treasury_cash_movement
+        treasury = {"treasury_balance": 100, "posted_sources": []}
+        for delta in (0, 1.5, True):
+            with self.subTest(delta=delta), self.assertRaises(ValueError):
+                apply_treasury_cash_movement(treasury, "bad", delta)

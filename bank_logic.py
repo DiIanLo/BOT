@@ -107,3 +107,33 @@ def accrue_savings_account(account: dict[str, Any], now: datetime) -> list[dict[
     account["month_interest"] = round(monthly_interest, 8)
     account["last_accrual_at"] = now.isoformat(timespec="seconds")
     return events
+
+
+
+def apply_treasury_cash_movement(treasury: dict[str, Any], source_ref: str, delta: int) -> bool:
+    """Apply one idempotent cash movement to free treasury funds.
+
+    Positive deltas are confirmed cash inflows; negative deltas are payouts.
+    Returns False when the source reference has already been posted.
+    Raises ValueError rather than allowing the cash balance to become negative.
+    """
+    if not isinstance(treasury, dict):
+        raise TypeError("Казна должна быть словарём.")
+    if not isinstance(source_ref, str) or not source_ref.strip():
+        raise ValueError("Для движения казны требуется непустой source_ref.")
+    if isinstance(delta, bool) or not isinstance(delta, int) or delta == 0:
+        raise ValueError("Сумма движения казны должна быть ненулевым целым числом.")
+    posted = treasury.setdefault("posted_sources", [])
+    if not isinstance(posted, list):
+        raise ValueError("Список posted_sources имеет неверный формат.")
+    if source_ref in posted:
+        return False
+    balance = treasury.get("treasury_balance", 0)
+    if isinstance(balance, bool) or not isinstance(balance, (int, float)):
+        raise ValueError("Баланс казны имеет неверный формат.")
+    balance = int(balance)
+    if balance + delta < 0:
+        raise ValueError(f"Недостаточно средств в казне: доступно {balance}, требуется {-delta}.")
+    treasury["treasury_balance"] = balance + delta
+    posted.append(source_ref)
+    return True
