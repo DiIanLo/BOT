@@ -27,4 +27,4 @@ jobs:
       - name: Compile Python modules
         run: python -m compileall -q main.py bank_system.py credit_system.py
       - name: Run tests
-        run: python -m pytest -q
+        run: python -m pytest -q tests
