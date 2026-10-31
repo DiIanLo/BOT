@@ -4428,7 +4428,7 @@ async def _upsert_main_menu(ctx):
                 await existing[0].delete()
             except discord.HTTPException:
                 pass
-        for duplicate in existing[1:]
+        for duplicate in existing[1:]:
             try:
                 await duplicate.delete()
             except discord.HTTPException:
