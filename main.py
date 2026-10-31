@@ -4414,7 +4414,7 @@ async def _upsert_main_menu(ctx):
                 title = message.embeds[0].title
                 if title in MAIN_MENU_EMBED_TITLES:
                     existing.append(message)
-        except discord.Forbidden:
+        except (discord.Forbidden, discord.HTTPException):
             # Without read-history permission, still provide the menu instead of failing.
             existing = []
 
@@ -4424,7 +4424,11 @@ async def _upsert_main_menu(ctx):
             await primary.edit(content=None, embed=embed, view=view)
         except discord.HTTPException:
             primary = await ctx.send(embed=embed, view=view)
-        for duplicate in existing[1:]:
+            try:
+                await existing[0].delete()
+            except discord.HTTPException:
+                pass
+        for duplicate in existing[1:]
             try:
                 await duplicate.delete()
             except discord.HTTPException:
