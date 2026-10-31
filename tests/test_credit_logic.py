@@ -33,8 +33,8 @@ class CreditScheduleTests(unittest.TestCase):
     def test_accrual_uses_only_whole_elapsed_days_and_outstanding_principal(self):
         loan = {"last_interest_at": "2026-01-01T12:00:00", "principal_remaining": 700,
                 "daily_rate": 0.01, "interest_accrued": 2.0}
-        self.assertAlmostEqual(accrue_interest(loan, datetime(2026, 1, 3, 11)), 16.0)
-        self.assertEqual(loan["last_interest_at"], "2026-01-03T12:00:00")
+        self.assertAlmostEqual(accrue_interest(loan, datetime(2026, 1, 3, 11)), 9.0)
+        self.assertEqual(loan["last_interest_at"], "2026-01-02T12:00:00")
 
 
 if __name__ == "__main__":
