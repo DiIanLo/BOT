@@ -282,7 +282,9 @@ def setup_bank_system(
             return await ctx.send("❌ Этот счёт открыт без пополнений. После первоначального взноса дополнительные пополнения запрещены.")
         source_ref = f"savings-deposit:{account['id']}:{now_msk().isoformat(timespec='seconds')}:{ctx.author.id}"
         try:
-            apply_treasury_cash_movement(treasury, source_ref, amount)
+            posted = apply_treasury_cash_movement(treasury, source_ref, amount)
+            if not posted:
+                return await ctx.send("❌ Эта операция уже отмечена в казне; повторное зачисление отменено.")
         except (TypeError, ValueError) as exc:
             return await ctx.send(f"❌ Пополнение не записано в казну: {exc}")
         account["balance"] = int(account.get("balance", 0)) + amount
@@ -305,7 +307,9 @@ def setup_bank_system(
             return await ctx.send("❌ После снятия на счёте должно остаться не менее 100 алмазов.")
         source_ref = f"savings-withdraw:{account['id']}:{now_msk().isoformat(timespec='seconds')}:{ctx.author.id}"
         try:
-            apply_treasury_cash_movement(treasury, source_ref, -amount)
+            posted = apply_treasury_cash_movement(treasury, source_ref, -amount)
+            if not posted:
+                return await ctx.send("❌ Эта операция уже отмечена в казне; повторная выплата отменена.")
         except (TypeError, ValueError) as exc:
             return await ctx.send(f"❌ Снятие не выполнено: {exc}")
         old_rate = float(account["rate"])
@@ -351,7 +355,10 @@ def setup_bank_system(
         interest = deposit_interest(amount, term)
         source_ref = f"deposit-open:{did}"
         try:
-            apply_treasury_cash_movement(treasury, source_ref, amount)
+            posted = apply_treasury_cash_movement(treasury, source_ref, amount)
+            if not posted:
+                deposits["next_id"] -= 1
+                return await ctx.send("❌ Номер вклада уже присутствует в журнале казны. Операция остановлена для ручной сверки.")
         except (TypeError, ValueError) as exc:
             deposits["next_id"] -= 1
             return await ctx.send(f"❌ Вклад не открыт: {exc}")
@@ -392,7 +399,9 @@ def setup_bank_system(
         interest = int(dep.get("contractual_interest", 0))
         source_ref = f"deposit-payout:{deposit_id}"
         try:
-            apply_treasury_cash_movement(treasury, source_ref, -payout)
+            posted = apply_treasury_cash_movement(treasury, source_ref, -payout)
+            if not posted:
+                return await ctx.send("❌ Выплата по этому вкладу уже отмечена в казне; повторная выплата отменена.")
         except (TypeError, ValueError) as exc:
             return await ctx.send(f"❌ Выплата не выполнена: {exc} Казна должна покрывать всю сумму, включая возвращаемый основной капитал.")
         dep.update({"status": "paid", "paid_at": now_msk().isoformat(timespec="seconds"), "paid_by": str(ctx.author.id), "payout": payout})
@@ -410,7 +419,9 @@ def setup_bank_system(
         retained = int(dep["principal"]) - payout
         source_ref = f"deposit-early:{deposit_id}"
         try:
-            apply_treasury_cash_movement(treasury, source_ref, -payout)
+            posted = apply_treasury_cash_movement(treasury, source_ref, -payout)
+            if not posted:
+                return await ctx.send("❌ Досрочная выплата уже отмечена в казне; повторная выплата отменена.")
         except (TypeError, ValueError) as exc:
             return await ctx.send(f"❌ Досрочная выплата не выполнена: {exc}")
         dep.update({"status": "early_closed", "closed_at": now_msk().isoformat(timespec="seconds"), "closed_by": str(ctx.author.id), "payout": payout, "retained_amount": retained})
