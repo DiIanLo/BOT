@@ -95,3 +95,30 @@ def test_menu_context_proxy_does_not_mix_embed_and_embeds_keywords():
     assert "send_message(**payload)" in segment
     assert "followup.send(**payload)" in segment
     assert "embed=embed, embeds=embeds" not in segment
+
+
+def test_new_main_menu_has_no_legacy_duplicate_action_buttons():
+    source = (Path(__file__).resolve().parents[1] / "main.py").read_text(encoding="utf-8")
+    menu = source.split("def build_main_menu_view(member)", 1)[1].split("# Полный каталог команд:", 1)[0]
+    assert "cabinet = discord.ui.Button" not in menu
+    assert "myq = discord.ui.Button" not in menu
+    assert "add_directory_button(view, member, '🏦 Банк'" in menu
+    assert "add_directory_button(view, member, '💳 Кредиты'" in menu
+    assert "add_directory_button(view, member, '🛡️ СОБР'" in menu
+    assert "📖 Гайды гильдий" in menu
+
+
+def test_guildmaster_is_a_separate_role_and_can_manage_all_guilds():
+    source = (Path(__file__).resolve().parents[1] / "main.py").read_text(encoding="utf-8")
+    assert "GUILDMASTER_ROLE_NAME = 'Гильдмастер'" in source
+    assert "def is_guildmaster(member)" in source
+    assert "is_guildmaster(interaction.user)" in source
+    assert "is_guildmaster(ctx.author)" in source
+
+
+def test_quest_rank_is_saved_and_checked_when_taking_a_quest():
+    source = (Path(__file__).resolve().parents[1] / "main.py").read_text(encoding="utf-8")
+    assert "'rank': rank" in source
+    assert "quest_rank = str(quest.get('rank', 'F')).upper()" in source
+    assert "can_take_task(player_rank, quest_rank)" in source
+    assert "'failure_penalty_multiplier': PENALTY_DIFF_MULTIPLIER.get(rank_gap, 1.0)" in source
