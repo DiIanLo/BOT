@@ -56,8 +56,6 @@ QUEST_CONFIRM_REACTION = '✅'
 VACATION_COOLDOWN_DAYS = 14
 INVITE_CODE_TTL_HOURS = 24
 
-GUILDMASTER_ROLE_NAME = 'Гильдмастер'
-
 GUILD_LEADER_ROLES = {
     'шахтёры': 1543957261238403082,
     'архитекторы': 1543958583346077747,
@@ -331,10 +329,6 @@ def normalize_guild_name(value: str) -> Optional[str]:
     return next((name for name in GUILD_NAMES if name.casefold() == normalized), None)
 
 
-def is_guildmaster(member) -> bool:
-    return any(str(getattr(role, 'name', '')).strip().casefold() == GUILDMASTER_ROLE_NAME.casefold() for role in getattr(member, 'roles', []))
-
-
 def interaction_can_manage_guild(interaction: discord.Interaction, guild_name: str,
                                  creator_id: Optional[int] = None) -> bool:
     """Повторная проверка автора меню и прав при каждом UI-взаимодействии."""
@@ -342,7 +336,7 @@ def interaction_can_manage_guild(interaction: discord.Interaction, guild_name: s
         return False
     if not interaction.guild or not hasattr(interaction.user, 'roles'):
         return False
-    if interaction.user.guild_permissions.administrator or is_guildmaster(interaction.user):
+    if interaction.user.guild_permissions.administrator:
         return True
     canonical = normalize_guild_name(guild_name)
     role_id = GUILD_LEADER_ROLES.get(canonical) if canonical else None
@@ -354,7 +348,7 @@ def interaction_can_manage_any_guild(interaction: discord.Interaction, creator_i
         return False
     if not interaction.guild or not hasattr(interaction.user, 'roles'):
         return False
-    return bool(interaction.user.guild_permissions.administrator or is_guildmaster(interaction.user) or any(
+    return bool(interaction.user.guild_permissions.administrator or any(
         discord.utils.get(interaction.user.roles, id=role_id) for role_id in GUILD_LEADER_ROLES.values()))
 
 class AuthorizedView(discord.ui.View):
@@ -418,8 +412,7 @@ def get_rank_diff(player_rank: str, task_rank: str) -> int:
 
 
 def can_take_task(player_rank: str, task_rank: str) -> bool:
-    """Разрешает задания своего ранга или на 1–2 ранга выше."""
-    return player_rank in RANK_ORDER and task_rank in RANK_ORDER and 0 <= RANK_ORDER.index(task_rank) - RANK_ORDER.index(player_rank) <= 2
+    return player_rank in RANK_ORDER and task_rank in RANK_ORDER and get_rank_diff(player_rank, task_rank) <= 2
 
 
 def can_add_tasks(rank: str, completed: int, requested: int) -> bool:
@@ -583,7 +576,6 @@ def get_guild_from_category(ctx: commands.Context) -> Optional[str]:
 
 def get_user_role(ctx: commands.Context) -> str:
     if ctx.author.guild_permissions.administrator: return 'admin'
-    if is_guildmaster(ctx.author): return 'guildmaster'
     if hasattr(ctx.author, 'roles'):
         for role_id in GUILD_LEADER_ROLES.values():
             if discord.utils.get(ctx.author.roles, id=role_id): return 'leader'
@@ -981,7 +973,7 @@ async def _publish_scheduled_quests(guild_name: str, quest_type: str, count: int
             qid = generate_quest_id()
             title = f"{'📅 Еженед.' if quest_type == 'weekly' else '📆 Ежедн.'} | {template['name']}"
             body = (f"🆔 **ID квеста: `{qid}`**\n\n🎯 **{template['name']}**\n\n{template['description']}\n\n"
-                    f"🔰 **Ранг задания:** {str(template.get('rank', 'F')).upper()}\n💎 **Бонус:** +{bonus:g}%\n⏰ **Срок:** {format_duration(limit)}\n"
+                    f"💎 **Бонус:** +{bonus:g}%\n⏰ **Срок:** {format_duration(limit)}\n"
                     f"📂 **Категория:** {template.get('category', '—')}\n"
                     f"{quest_reward_label(template)}\n\n"
                     f"**Поставьте {QUEST_TAKE_REACTION}, чтобы взять!**")
@@ -990,7 +982,7 @@ async def _publish_scheduled_quests(guild_name: str, quest_type: str, count: int
                 'guild': guild_name, 'name': str(template['name']), 'description': str(template['description']),
                 'type': quest_type, 'bonus': bonus, 'time_limit_minutes': limit, 'creator_id': 0,
                 'created_at': now_msk().isoformat(), 'thread_id': thread.id, 'message_id': message.id,
-                'status': 'active', 'mode': mode, 'rank': str(template.get('rank', 'F')).upper() if str(template.get('rank', 'F')).upper() in RANK_ORDER else 'F', 'template_id': template_id, 'scheduled_auto': True,
+                'status': 'active', 'mode': mode, 'template_id': template_id, 'scheduled_auto': True,
                 'schedule_period': period_key, **quest_reward_config(template),
             }
             save_data()
@@ -1941,7 +1933,7 @@ class TemplateCreateModal(discord.ui.Modal, title='Создание квеста
     time_input = discord.ui.TextInput(label='Срок (например 1д 2ч 30м; 0 = без)', default='1д', required=True, max_length=40)
     type_input = discord.ui.TextInput(label='Периодичность (weekly/daily/once)', default='weekly', required=True, max_length=10)
     mode_input = discord.ui.TextInput(label='Режим (individual / group)', default='individual', required=True, max_length=10)
-    reward_input = discord.ui.TextInput(label='Ранг | алмазы, XP (0,0 = без)', default='F | 0, 0', required=True, max_length=40)
+    reward_input = discord.ui.TextInput(label='Награда: алмазы, XP (0,0 = без)', default='0, 0', required=True, max_length=20)
 
     def __init__(self, template_id: str, template: Dict, guild: str, creator_id: int, reward_enabled: bool = True):
         super().__init__()
@@ -1951,7 +1943,7 @@ class TemplateCreateModal(discord.ui.Modal, title='Создание квеста
         self.time_input.default = (format_duration(int(template.get('time_limit', 1440))) if int(template.get('time_limit', 1440)) > 0 else '0')
         self.type_input.default = template.get('type', 'weekly')
         self.mode_input.default = template.get('mode', 'individual')
-        self.reward_input.default = (f"{str(template.get('rank', 'F')).upper()} | {int(template.get('reward_diamonds', 0) or 0)}, {int(template.get('reward_xp', 0) or 0)}" if reward_enabled else f"{str(template.get('rank', 'F')).upper()} | 0, 0")
+        self.reward_input.default = (f"{int(template.get('reward_diamonds', 0) or 0)}, {int(template.get('reward_xp', 0) or 0)}" if reward_enabled else '0, 0')
 
     async def on_submit(self, interaction: discord.Interaction):
         if not interaction_can_manage_guild(interaction, self.guild, self.creator_id):
@@ -1959,10 +1951,7 @@ class TemplateCreateModal(discord.ui.Modal, title='Создание квеста
         try:
             bonus, time_limit = float(self.bonus_input.value.replace('%', '')), parse_duration_minutes(self.time_input.value)
             quest_type, mode = self.type_input.value.strip().lower(), self.mode_input.value.strip().lower()
-            rank_text, reward_text = self.reward_input.value.split('|', 1)
-            rank = rank_text.strip().upper()
-            if rank not in RANK_ORDER: raise ValueError('Ранг задания должен быть одним из: F, E, D, C, B, A, S.')
-            reward = parse_reward_pair(reward_text.strip()) if self.reward_enabled else parse_reward_pair('0, 0')
+            reward = parse_reward_pair(self.reward_input.value) if self.reward_enabled else parse_reward_pair('0, 0')
         except ValueError as exc:
             return await interaction.response.send_message(f'❌ Проверьте поля: {exc}', ephemeral=True)
         if self.reward_enabled and reward['reward_type'] != 'diamonds_xp':
@@ -1983,7 +1972,7 @@ class TemplateCreateModal(discord.ui.Modal, title='Создание квеста
             type_label = {'weekly': '📅 Еженед.', 'daily': '📆 Ежедн.', 'once': '🎯 Разовый'}[quest_type]
             title = f"{type_label} | {payload['name']}"
             body = (f"🆔 **ID квеста: `{qid}`**\n\n🎯 **{payload['name']}**\n\n{payload['description']}\n\n"
-                    f"🔰 **Ранг задания:** {rank}\n💼 **Бонус к зарплате:** +{bonus:g}%\n⏰ **Срок:** {format_duration(time_limit)}\n"
+                    f"💼 **Бонус к зарплате:** +{bonus:g}%\n⏰ **Срок:** {format_duration(time_limit)}\n"
                     f"{quest_reward_label(reward)}\n\nПоставьте {QUEST_TAKE_REACTION}, чтобы взять!")
             thread, msg = await create_forum_post(board, title, body)
             data['quests'][qid] = {**payload, 'created_at': now_msk().isoformat(), 'thread_id': thread.id,
@@ -2023,7 +2012,7 @@ class TemplatePreviewView(AuthorizedView):
 class TemplateSelect(discord.ui.Select):
     def __init__(self, templates: List[Dict], guild: str, creator_id: int):
         self.guild, self.creator_id = guild, creator_id
-        options = [discord.SelectOption(label=t['name'][:100], description=f"Ранг {t.get('rank', 'F')} | +{t['bonus']}% | {t.get('category', '—')}",
+        options = [discord.SelectOption(label=t['name'][:100], description=f"+{t['bonus']}% | {t.get('category', '—')}",
                                         value=t['id']) for t in templates[:25]]
         super().__init__(placeholder='Выберите шаблон...', options=options)
 
@@ -2089,7 +2078,7 @@ class CreateTemplateModal(discord.ui.Modal, title='Создание шаблон
     description_input = discord.ui.TextInput(label='Описание', style=discord.TextStyle.paragraph, required=True, max_length=300)
     bonus_input = discord.ui.TextInput(label='Бонус к зарплате (%)', default='10', required=True, max_length=6)
     time_input = discord.ui.TextInput(label='Срок (например 1д 2ч 30м; 0 = без)', default='1д', required=True, max_length=40)
-    category_reward_input = discord.ui.TextInput(label='Категория | ранг | алмазы, XP', default='📋 Свои | F | 0, 0', required=True, max_length=80)
+    category_reward_input = discord.ui.TextInput(label='Категория | алмазы, XP', default='📋 Свои | 0, 0', required=True, max_length=60)
 
     def __init__(self, creator_id: int, template_type: str = 'weekly'):
         super().__init__()
@@ -2101,12 +2090,9 @@ class CreateTemplateModal(discord.ui.Modal, title='Создание шаблон
             return await interaction.response.send_message('❌ Недостаточно прав или это меню создал другой пользователь.', ephemeral=True)
         try:
             bonus, time_limit = float(self.bonus_input.value.replace('%', '')), parse_duration_minutes(self.time_input.value)
-            parts = [part.strip() for part in self.category_reward_input.value.split('|')]
-            if len(parts) != 3: raise ValueError('Формат: категория | ранг F–S | алмазы, XP.')
-            category, rank, reward_text = parts
-            category = category or '📋 Свои'; rank = rank.upper()
-            if rank not in RANK_ORDER: raise ValueError('Ранг должен быть одним из: F, E, D, C, B, A, S.')
-            reward = parse_reward_pair(reward_text)
+            category, reward_text = self.category_reward_input.value.rsplit('|', 1)
+            category = category.strip() or '📋 Свои'
+            reward = parse_reward_pair(reward_text.strip())
         except ValueError as exc:
             return await interaction.response.send_message(f'❌ Проверьте поля: {exc}', ephemeral=True)
         if not (0 <= bonus <= 100 and 0 <= time_limit <= 525600):
@@ -2116,7 +2102,7 @@ class CreateTemplateModal(discord.ui.Modal, title='Создание шаблон
             template_id = 'custom_' + generate_random_code(6)
         quest_templates[template_id] = {'name': self.name_input.value, 'description': self.description_input.value,
                                         'bonus': bonus, 'time_limit': time_limit, 'category': category,
-                                        'type': self.template_type, 'mode': 'individual', 'rank': rank, **reward,
+                                        'type': self.template_type, 'mode': 'individual', **reward,
                                         'creator_id': self.creator_id, 'created_at': now_msk().isoformat(),
                                         'is_custom': True}
         save_templates()
@@ -2130,24 +2116,21 @@ class CreateQuestModal(discord.ui.Modal, title='Создание квеста'):
     description_input = discord.ui.TextInput(label='Описание', style=discord.TextStyle.paragraph, required=True, max_length=300)
     bonus_input = discord.ui.TextInput(label='Бонус к зарплате (%)', default='10', required=True, max_length=6)
     time_input = discord.ui.TextInput(label='Срок (например 1д 2ч 30м; 0 = без)', default='1д', required=True, max_length=40)
-    reward_input = discord.ui.TextInput(label='Ранг | алмазы, XP (0,0 = без)', default='F | 0, 0', required=True, max_length=40)
+    reward_input = discord.ui.TextInput(label='Награда: алмазы, XP (0,0 = без)', default='0, 0', required=True, max_length=20)
 
     def __init__(self, guild_name: str, quest_type: str, creator_id: int, mode: str = 'individual', reward_enabled: bool = True):
         super().__init__()
         self.guild_name, self.quest_type, self.creator_id, self.mode = guild_name, quest_type, creator_id, mode
         self.reward_enabled = reward_enabled
         if not reward_enabled:
-            self.reward_input.default = 'F | 0, 0'
+            self.reward_input.default = '0, 0'
 
     async def on_submit(self, interaction: discord.Interaction):
         if not interaction_can_manage_guild(interaction, self.guild_name, self.creator_id):
             return await interaction.response.send_message('❌ Недостаточно прав или это меню создал другой пользователь.', ephemeral=True)
         try:
             bonus, time_limit = float(self.bonus_input.value.replace('%', '')), parse_duration_minutes(self.time_input.value)
-            rank_text, reward_text = self.reward_input.value.split('|', 1)
-            rank = rank_text.strip().upper()
-            if rank not in RANK_ORDER: raise ValueError('Ранг задания должен быть одним из: F, E, D, C, B, A, S.')
-            reward = parse_reward_pair(reward_text.strip()) if self.reward_enabled else parse_reward_pair('0, 0')
+            reward = parse_reward_pair(self.reward_input.value) if self.reward_enabled else parse_reward_pair('0, 0')
         except ValueError as exc:
             return await interaction.response.send_message(f'❌ Проверьте поля: {exc}', ephemeral=True)
         if self.reward_enabled and reward['reward_type'] != 'diamonds_xp':
@@ -2164,7 +2147,7 @@ class CreateQuestModal(discord.ui.Modal, title='Создание квеста'):
             return await interaction.response.send_message('❌ Доска не настроена или канал не является форумом!', ephemeral=True)
         payload = {'guild': self.guild_name, 'name': self.name_input.value, 'description': self.description_input.value,
                    'type': self.quest_type, 'bonus': bonus, 'time_limit_minutes': time_limit,
-                   'creator_id': self.creator_id, 'mode': self.mode, 'rank': rank, **reward}
+                   'creator_id': self.creator_id, 'mode': self.mode, **reward}
         try:
             qid = generate_quest_id()
             type_label = {'weekly': '📅 Еженед.', 'daily': '📆 Ежедн.', 'once': '🎯 Разовый'}[self.quest_type]
@@ -2581,7 +2564,7 @@ class QuestIdSelect(discord.ui.Select):
             return await interaction.response.send_message('Квест не найден.', ephemeral=True)
         if not interaction_can_manage_guild(interaction, quest.get('guild', ''), self.creator_id):
             return await interaction.response.send_message('❌ Нет прав для этой гильдии.', ephemeral=True)
-        embed = discord.Embed(title=f"🎯 {quest.get('name', qid)}", description=f"🆔 **ID:** `{qid}`\n🏛️ **Гильдия:** {quest.get('guild', '—')}\n🔰 **Ранг:** {quest.get('rank', 'F')}\n📌 **Статус:** {quest.get('status', '—')}\n🔁 **Тип:** {quest.get('type', '—')}\n👥 **Режим:** {quest.get('mode', '—')}\n💼 **Бонус:** +{quest.get('bonus', 0)}%\n{quest_reward_label(quest)}", color=discord.Color.blue())
+        embed = discord.Embed(title=f"🎯 {quest.get('name', qid)}", description=f"🆔 **ID:** `{qid}`\n🏛️ **Гильдия:** {quest.get('guild', '—')}\n📌 **Статус:** {quest.get('status', '—')}\n🔁 **Тип:** {quest.get('type', '—')}\n👥 **Режим:** {quest.get('mode', '—')}\n💼 **Бонус:** +{quest.get('bonus', 0)}%\n{quest_reward_label(quest)}", color=discord.Color.blue())
         if quest.get('thread_id'):
             embed.add_field(name='Публикация', value=f"https://discord.com/channels/{interaction.guild_id}/{quest.get('thread_id')}", inline=False)
         await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -2697,8 +2680,8 @@ class AdminGuildSelectView(discord.ui.View):
         async def select_callback(interaction: discord.Interaction):
             if interaction.user.id != self.creator_id:
                 return await interaction.response.send_message('Это меню создано другим пользователем.', ephemeral=True)
-            if not (interaction.user.guild_permissions.administrator or is_guildmaster(interaction.user)):
-                return await interaction.response.send_message('Выбор всех гильдий доступен только администратору или гильдмастеру.', ephemeral=True)
+            if not interaction.user.guild_permissions.administrator:
+                return await interaction.response.send_message('Выбор всех гильдий доступен только администратору.', ephemeral=True)
             guild_name = select.values[0]
             if self.mode == 'schedule':
                 menu = QuestScheduleMenu(self.creator_id, guild_name)
@@ -2732,33 +2715,104 @@ class MainMenuView(discord.ui.View):
 
 
 def build_main_menu_embed(member) -> discord.Embed:
-    role = ('администратор' if getattr(getattr(member, 'guild_permissions', None), 'administrator', False) else 'гильдмастер' if is_guildmaster(member) else f'глава гильдии: {get_leader_guild_from_member(member)}' if get_leader_guild_from_member(member) else ('игрок' if str(member.id) in data.get('players', {}) else 'не зарегистрирован'))
+    role = 'администратор' if getattr(getattr(member, 'guild_permissions', None), 'administrator', False) else (
+        f'глава гильдии: {get_leader_guild_from_member(member)}' if get_leader_guild_from_member(member) else
+        ('игрок' if str(member.id) in data.get('players', {}) else 'не зарегистрирован'))
     return discord.Embed(title='🧭 Главное меню RPG-бота', description=f'Пользователь: **{member.display_name}**\nРоль: **{role}**\n\nВыберите действие кнопками ниже. Команды по-прежнему доступны для совместимости.', color=discord.Color.blurple())
 
 
 def build_main_menu_view(member) -> discord.ui.View:
-    """Новое меню-каталог без старых дублирующих кнопок."""
     view = MainMenuView(member.id)
+    cabinet = discord.ui.Button(label='👤 Личный кабинет', style=discord.ButtonStyle.secondary, row=0)
+    async def cabinet_cb(interaction: discord.Interaction):
+        player = data.get('players', {}).get(str(interaction.user.id))
+        if not player:
+            return await interaction.response.send_message('❌ Вы ещё не зарегистрированы.', ephemeral=True)
+        embed = discord.Embed(title=f"👤 Кабинет: {player.get('minecraft_nick', 'Игрок')}", color=discord.Color.blue())
+        embed.add_field(name='🏅 Ранг', value=str(player.get('rank', '—')), inline=True)
+        embed.add_field(name='⭐ Очки', value=str(player.get('points', 0)), inline=True)
+        embed.add_field(name='💰 Зарплата', value=str(player.get('salary', 0)), inline=True)
+        embed.add_field(name='🎯 Бонус к зарплате', value=f"+{player.get('quest_bonus', 0)}%", inline=True)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+    cabinet.callback = cabinet_cb; view.add_item(cabinet)
+    myq = discord.ui.Button(label='🎯 Мои квесты', style=discord.ButtonStyle.secondary, row=0)
+    async def myq_cb(interaction: discord.Interaction):
+        uid = str(interaction.user.id); player = data.get('players', {}).get(uid)
+        if not player: return await interaction.response.send_message('❌ Вы ещё не зарегистрированы.', ephemeral=True)
+        embed = discord.Embed(title=f"🎯 Квесты {player.get('minecraft_nick', 'Игрок')}", color=discord.Color.blue())
+        entries = []
+        for qid, users in data.get('player_quests', {}).items():
+            if uid not in users: continue
+            quest = data.get('quests', {}).get(qid, {}); part = users[uid]
+            state = {'taken':'🟡 в процессе','confirmed':'✅ подтверждён','overdue':'⏰ просрочен','cancelled':'🚫 отменён'}.get(part.get('status'), part.get('status','—'))
+            reward_state = ' · 🎁 награда ожидает выдачи' if part.get('reward_status') == 'pending' else (' · ✅ награда выдана' if part.get('reward_status') == 'paid' else '')
+            entries.append(f"**{quest.get('name', qid)}** (`{qid}`) — {state} (+{quest.get('bonus', 0)}%){reward_state}")
+        embed.description = '\n'.join(entries[:20]) if entries else 'Активных и завершённых квестов пока нет.'
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+    myq.callback = myq_cb; view.add_item(myq)
     member_guild = get_leader_guild_from_member(member)
-    is_admin = bool(getattr(getattr(member, 'guild_permissions', None), 'administrator', False))
-    has_global_access = is_admin or is_guildmaster(member)
-    add_directory_button(view, member, '👤 Личный кабинет', 0)
-    add_directory_button(view, member, '🏦 Банк', 0)
-    add_directory_button(view, member, '💳 Кредиты', 0)
-    if has_global_access or any(_member_in_guild(member, name) for name in GUILD_NAMES):
-        add_directory_button(view, member, '🏛️ Гильдия', 1)
-    if member_guild or has_global_access or any(_member_in_guild(member, name) for name in GUILD_NAMES):
-        add_directory_button(view, member, '🎯 Квесты', 1)
-    if _member_in_guild(member, 'СОБР') or has_global_access:
-        add_directory_button(view, member, '🛡️ СОБР', 1)
-    if has_global_access:
-        add_directory_button(view, member, '⚙️ Администрирование', 2)
-    help_button = discord.ui.Button(label='📚 Справка', style=discord.ButtonStyle.secondary, row=2)
-    async def help_callback(interaction: discord.Interaction):
-        await interaction.response.send_message('Полный справочник команд доступен через команду chelp.', ephemeral=True)
-    help_button.callback = help_callback
-    view.add_item(help_button)
+    is_admin = getattr(getattr(member, 'guild_permissions', None), 'administrator', False)
+    if member_guild or is_admin:
+        quests = discord.ui.Button(label='🛠️ Управление квестами', style=discord.ButtonStyle.primary, row=1)
+        async def quests_cb(interaction: discord.Interaction):
+            guild = get_leader_guild_from_member(interaction.user)
+            if interaction.user.guild_permissions.administrator and not guild:
+                return await interaction.response.edit_message(
+                    embed=discord.Embed(title='🎯 Выбор гильдии', description='Администратор может управлять квестами каждой гильдии. Выберите нужную.', color=discord.Color.blue()),
+                    view=AdminGuildSelectView(interaction.user.id, 'quests'))
+            hub = QuestHubView(interaction.user.id, guild)
+            await interaction.response.edit_message(embed=discord.Embed(title='🎯 Управление квестами', description='Создание квестов, шаблоны, награды, закрытие и автоквесты собраны здесь.', color=discord.Color.blue()), view=hub)
+        quests.callback = quests_cb; view.add_item(quests)
+        schedules = discord.ui.Button(label='⚙️ Расписание автоквестов', style=discord.ButtonStyle.secondary, row=1)
+        async def schedules_cb(interaction: discord.Interaction):
+            guild = get_leader_guild_from_member(interaction.user)
+            if interaction.user.guild_permissions.administrator and not guild:
+                return await interaction.response.edit_message(
+                    embed=discord.Embed(title='⚙️ Выбор гильдии', description='Выберите гильдию для настройки автоквестов.', color=discord.Color.blue()),
+                    view=AdminGuildSelectView(interaction.user.id, 'schedule'))
+            v = QuestScheduleMenu(interaction.user.id, guild or GUILD_NAMES[0])
+            await interaction.response.edit_message(embed=v.make_embed(), view=v)
+        schedules.callback = schedules_cb; view.add_item(schedules)
+    help_btn = discord.ui.Button(label='📚 Справка', style=discord.ButtonStyle.secondary, row=2)
+    async def help_cb(interaction: discord.Interaction):
+        await interaction.response.send_message('Используйте `.chelp` для полного справочника команд. Управление квестами доступно через это меню.', ephemeral=True)
+    help_btn.callback = help_cb; view.add_item(help_btn)
+    guide_btn = discord.ui.Button(label='📖 Гайды гильдий', style=discord.ButtonStyle.secondary, row=2)
+    async def guide_cb(interaction: discord.Interaction):
+        allowed = [g for g in GUILD_NAMES if _member_in_guild(interaction.user, g)]
+        if interaction.user.guild_permissions.administrator:
+            allowed = list(GUILD_NAMES)
+        if not allowed:
+            return await interaction.response.send_message('Сначала вступите в гильдию, чтобы открыть её гайд.', ephemeral=True)
+        opts = [discord.SelectOption(label=GUILD_GUIDES[g][0][:100], value=g) for g in allowed]
+        v = discord.ui.View(timeout=180)
+        sel = discord.ui.Select(placeholder='Выберите гильдию для подробного гайда', options=opts)
+        async def guide_select(i: discord.Interaction):
+            guild_name = sel.values[0]
+            if not i.user.guild_permissions.administrator and not _member_in_guild(i.user, guild_name):
+                return await i.response.send_message('❌ Гайд доступен участникам этой гильдии.', ephemeral=True)
+            title, body = GUILD_GUIDES[guild_name]
+            emb = discord.Embed(title=title, description=body, color=discord.Color.blurple())
+            emb.set_footer(text='Откройте .menu для перехода к функциям гильдии.')
+            await i.response.send_message(embed=emb, ephemeral=True)
+        sel.callback = guide_select; v.add_item(sel)
+        await interaction.response.send_message('Выберите гильдию:', view=v, ephemeral=True)
+    guide_btn.callback = guide_cb; view.add_item(guide_btn)
+    # Категории каталога: игрокам доступны личный кабинет, банк и кредиты;
+    # управленческие разделы показываются по роли и повторно проверяются в callback.
+    add_directory_button(view, member, '👤 Личный кабинет', 2)
+    add_directory_button(view, member, '🏦 Банк', 3)
+    add_directory_button(view, member, '💳 Кредиты', 3)
+    if is_admin or any(_member_in_guild(member, g) for g in GUILD_NAMES):
+        add_directory_button(view, member, '🏛️ Гильдия', 4)
+    if member_guild or is_admin:
+        add_directory_button(view, member, '🎯 Квесты', 4)
+    if _member_in_guild(member, 'СОБР') or is_admin:
+        add_directory_button(view, member, '🛡️ СОБР', 4)
+    if is_admin:
+        add_directory_button(view, member, '⚙️ Администрирование', 4)
     return view
+
 
 # Полный каталог команд: интерфейс меню скрывает длинный список команд,
 # но сохраняет каждый исходный обработчик и его аргументы/проверки доступа.
@@ -3037,7 +3091,7 @@ class CommandActionModal(discord.ui.Modal):
 
 def _menu_visible_commands(member, group_name: str):
     names = list(MENU_COMMAND_GROUPS[group_name])
-    is_admin = bool(getattr(getattr(member, 'guild_permissions', None), 'administrator', False) or is_guildmaster(member))
+    is_admin = bool(getattr(getattr(member, 'guild_permissions', None), 'administrator', False))
     if is_admin:
         return names
     is_trader = _member_in_guild(member, 'торговцы')
@@ -3197,8 +3251,6 @@ def add_directory_button(view: discord.ui.View, member, group_name: str, row: in
 @bot.command(name='quest_create')
 async def quest_create(ctx):
     lg = get_leader_guild(ctx)
-    if not lg and is_guildmaster(ctx.author):
-        return await ctx.send(embed=discord.Embed(title='🎯 Выбор гильдии', description='Гильдмастер может управлять квестами всех гильдий. Выберите нужную в меню.', color=discord.Color.blue()), view=AdminGuildSelectView(ctx.author.id, 'quests'))
     if not lg: return await ctx.send('❌ Только для глав!')
     if gfc := get_guild_from_category(ctx):
         if lg != gfc: return await ctx.send(f'❌ Вы в категории **{gfc.capitalize()}**, но вы глава **{lg.capitalize()}**!')
@@ -3214,8 +3266,8 @@ async def quest_confirm(ctx, quest_id: str, nick: str):
     if not quest:
         return await ctx.send('❌ Квест не найден.')
     leader_guild = get_leader_guild(ctx)
-    if not is_guildmaster(ctx.author) and (not leader_guild or leader_guild != quest.get('guild')):
-        return await ctx.send('❌ Подтверждать квест может только глава соответствующей гильдии или гильдмастер.')
+    if not leader_guild or leader_guild != quest.get('guild'):
+        return await ctx.send('❌ Подтверждать квест может только глава соответствующей гильдии.')
     if quest.get('status') != 'active':
         return await ctx.send('❌ Этот квест уже закрыт. Подтверждение выполнения больше недоступно.')
     if quest.get('mode', 'group') != 'individual':
@@ -3263,8 +3315,8 @@ async def quest_reward_paid(ctx, quest_id: str, nick: str):
     quest = data.get('quests', {}).get(quest_id)
     if not quest:
         return await ctx.send('❌ Квест не найден.')
-    if not is_guildmaster(ctx.author) and get_leader_guild(ctx) != quest.get('guild'):
-        return await ctx.send('❌ Отмечать выдачу награды может только глава соответствующей гильдии или гильдмастер.')
+    if get_leader_guild(ctx) != quest.get('guild'):
+        return await ctx.send('❌ Отмечать выдачу награды может только глава соответствующей гильдии.')
     uid, player = find_player_by_nick(nick, quest['guild'])
     participant = data.get('player_quests', {}).get(quest_id, {}).get(uid) if uid else None
     if not player or not participant or participant.get('status') != 'confirmed':
@@ -3281,10 +3333,10 @@ async def quest_reward_paid(ctx, quest_id: str, nick: str):
 @bot.command(name='quest_delete')
 async def quest_delete(ctx, quest_id: str = None):
     lg = get_leader_guild(ctx)
-    if not lg and not is_guildmaster(ctx.author): return await ctx.send('❌ Только для глав/гильдмастера!')
+    if not lg: return await ctx.send('❌ Только для глав!')
     if quest_id:
         quest_id = quest_id.strip().upper()
-        if (q := data['quests'].get(quest_id)) and (q.get('guild') == lg or is_guildmaster(ctx.author)):
+        if (q := data['quests'].get(quest_id)) and q.get('guild') == lg:
             q['status'] = 'closed'
             q['closed_at'] = now_msk().isoformat()
             for participant in data.get('player_quests', {}).get(quest_id, {}).values():
@@ -3299,7 +3351,7 @@ async def quest_delete(ctx, quest_id: str = None):
                     print(f'⚠️ Не удалось архивировать квест {quest_id}: {exc}')
             return await ctx.send('✅ Квест закрыт.')
         return await ctx.send('❌ Не найден.')
-    active = [(qid, q) for qid, q in data['quests'].items() if (q.get('guild') == lg or is_guildmaster(ctx.author)) and q.get('status') == 'active']
+    active = [(qid, q) for qid, q in data['quests'].items() if q.get('guild') == lg and q.get('status') == 'active']
     if not active: return await ctx.send('📭 Нет активных квестов.')
     await ctx.send(embed=discord.Embed(title='🗑️ Удаление', description='.quest_delete ID\n\n' + '\n'.join(
         [f"`{qid}` — {q['name']}" for qid, q in active[:20]]), color=discord.Color.red()))
@@ -3321,18 +3373,6 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
         if quest.get('status') != 'active' or not (
         player := data.get('players', {}).get(str(payload.user_id))) or player.get('guild') != quest[
             'guild'] or get_player_quest(quest['id'], str(payload.user_id)): return
-        player_rank = str(player.get('rank', 'F')).upper()
-        quest_rank = str(quest.get('rank', 'F')).upper()
-        if not can_take_task(player_rank, quest_rank):
-            gap = RANK_ORDER.index(quest_rank) - RANK_ORDER.index(player_rank) if player_rank in RANK_ORDER and quest_rank in RANK_ORDER else None
-            reason = (f'ранг задания {quest_rank} ниже вашего {player_rank}' if gap is not None and gap < 0 else f'задание на {gap} ранга(ов) выше; максимум — на 2' if gap is not None and gap > 2 else 'ранг задания не подходит')
-            try:
-                channel = bot.get_channel(payload.channel_id)
-                if channel: await channel.send(f'⛔ <@{payload.user_id}>, взять квест нельзя: {reason}.')
-            except discord.HTTPException: pass
-            return
-        rank_gap = get_rank_diff(player_rank, quest_rank)
-        risk_note = '' if rank_gap == 0 else f' Бонус за сложность: +{RANK_DIFF_BONUS.get(rank_gap, 0)}% к базовой оплате; риск невыполнения ×{PENALTY_DIFF_MULTIPLIER.get(rank_gap, 1)}.'
         if is_on_vacation(str(payload.user_id)):
             try:
                 channel = bot.get_channel(payload.channel_id)
@@ -3342,13 +3382,13 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
                 pass
             return
         data['player_quests'].setdefault(quest['id'], {})[str(payload.user_id)] = {
-            'taken_at': now_msk().isoformat(), 'status': 'taken', 'player_rank_at_take': player_rank, 'quest_rank': quest_rank, 'rank_diff': rank_gap, 'difficulty_bonus_percent': RANK_DIFF_BONUS.get(rank_gap, 0), 'failure_penalty_multiplier': PENALTY_DIFF_MULTIPLIER.get(rank_gap, 1.0)}
+            'taken_at': now_msk().isoformat(), 'status': 'taken'}
         save_data()
         try:
             if channel := bot.get_channel(payload.channel_id):
                 deadline = f' ⏰ до **{(now_msk() + timedelta(minutes=quest["time_limit_minutes"])).strftime("%d.%m %H:%M")}**' if quest.get(
                     'time_limit_minutes') else ''
-                await channel.send(f'✅ <@{payload.user_id}> взял **{quest["name"]}** (ранг {quest_rank})!{risk_note}{deadline}')
+                await channel.send(f'✅ <@{payload.user_id}> взял **{quest["name"]}**!{deadline}')
         except:
             pass
         return
