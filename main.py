@@ -2130,7 +2130,7 @@ class CreateQuestModal(discord.ui.Modal, title='Создание квеста'):
     description_input = discord.ui.TextInput(label='Описание', style=discord.TextStyle.paragraph, required=True, max_length=300)
     bonus_input = discord.ui.TextInput(label='Бонус к зарплате (%)', default='10', required=True, max_length=6)
     time_input = discord.ui.TextInput(label='Срок (например 1д 2ч 30м; 0 = без)', default='1д', required=True, max_length=40)
-    reward_input = discord.ui.TextInput(label='Награда: алмазы, XP (0,0 = без)', default='0, 0', required=True, max_length=20)
+    reward_input = discord.ui.TextInput(label='Ранг | алмазы, XP (0,0 = без)', default='F | 0, 0', required=True, max_length=40)
 
     def __init__(self, guild_name: str, quest_type: str, creator_id: int, mode: str = 'individual', reward_enabled: bool = True):
         super().__init__()
@@ -2144,7 +2144,10 @@ class CreateQuestModal(discord.ui.Modal, title='Создание квеста'):
             return await interaction.response.send_message('❌ Недостаточно прав или это меню создал другой пользователь.', ephemeral=True)
         try:
             bonus, time_limit = float(self.bonus_input.value.replace('%', '')), parse_duration_minutes(self.time_input.value)
-            reward = parse_reward_pair(self.reward_input.value) if self.reward_enabled else parse_reward_pair('0, 0')
+            rank_text, reward_text = self.reward_input.value.split('|', 1)
+            rank = rank_text.strip().upper()
+            if rank not in RANK_ORDER: raise ValueError('Ранг задания должен быть одним из: F, E, D, C, B, A, S.')
+            reward = parse_reward_pair(reward_text.strip()) if self.reward_enabled else parse_reward_pair('0, 0')
         except ValueError as exc:
             return await interaction.response.send_message(f'❌ Проверьте поля: {exc}', ephemeral=True)
         if self.reward_enabled and reward['reward_type'] != 'diamonds_xp':
@@ -3034,7 +3037,7 @@ class CommandActionModal(discord.ui.Modal):
 
 def _menu_visible_commands(member, group_name: str):
     names = list(MENU_COMMAND_GROUPS[group_name])
-    is_admin = bool(getattr(getattr(member, 'guild_permissions', None), 'administrator', False))
+    is_admin = bool(getattr(getattr(member, 'guild_permissions', None), 'administrator', False) or is_guildmaster(member))
     if is_admin:
         return names
     is_trader = _member_in_guild(member, 'торговцы')
@@ -3194,6 +3197,8 @@ def add_directory_button(view: discord.ui.View, member, group_name: str, row: in
 @bot.command(name='quest_create')
 async def quest_create(ctx):
     lg = get_leader_guild(ctx)
+    if not lg and is_guildmaster(ctx.author):
+        return await ctx.send(embed=discord.Embed(title='🎯 Выбор гильдии', description='Гильдмастер может управлять квестами всех гильдий. Выберите нужную в меню.', color=discord.Color.blue()), view=AdminGuildSelectView(ctx.author.id, 'quests'))
     if not lg: return await ctx.send('❌ Только для глав!')
     if gfc := get_guild_from_category(ctx):
         if lg != gfc: return await ctx.send(f'❌ Вы в категории **{gfc.capitalize()}**, но вы глава **{lg.capitalize()}**!')
