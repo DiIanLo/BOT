@@ -2771,6 +2771,25 @@ def build_main_menu_view(member) -> discord.ui.View:
         await interaction.response.send_message('Полный справочник команд доступен через команду chelp.', ephemeral=True)
     help_button.callback = help_callback
     view.add_item(help_button)
+    guide_button = discord.ui.Button(label='📖 Гайды гильдий', style=discord.ButtonStyle.secondary, row=2)
+    async def guide_callback(interaction: discord.Interaction):
+        allowed = list(GUILD_NAMES) if (interaction.user.guild_permissions.administrator or is_guildmaster(interaction.user)) else [name for name in GUILD_NAMES if _member_in_guild(interaction.user, name)]
+        if not allowed:
+            return await interaction.response.send_message('Сначала вступите в гильдию, чтобы открыть её гайд.', ephemeral=True)
+        options = [discord.SelectOption(label=GUILD_GUIDES[name][0][:100], value=name) for name in allowed]
+        selector_view = discord.ui.View(timeout=180)
+        selector = discord.ui.Select(placeholder='Выберите гильдию для подробного гайда', options=options)
+        async def select_guide(i: discord.Interaction):
+            guild_name = selector.values[0]
+            if not (i.user.guild_permissions.administrator or is_guildmaster(i.user)) and not _member_in_guild(i.user, guild_name):
+                return await i.response.send_message('❌ Гайд доступен участникам этой гильдии.', ephemeral=True)
+            title, body = GUILD_GUIDES[guild_name]
+            await i.response.send_message(embed=discord.Embed(title=title, description=body, color=discord.Color.blurple()), ephemeral=True)
+        selector.callback = select_guide
+        selector_view.add_item(selector)
+        await interaction.response.send_message('Выберите гильдию:', view=selector_view, ephemeral=True)
+    guide_button.callback = guide_callback
+    view.add_item(guide_button)
     return view
 
 # Полный каталог команд: интерфейс меню скрывает длинный список команд,
@@ -4274,9 +4293,11 @@ async def quest_schedule(ctx, *args):
     """Открывает меню настройки автоматических ежедневных и еженедельных квестов."""
     if not ctx.guild:
         return await ctx.send('❌ Команда доступна только на сервере Discord.')
-    if not ctx.author.guild_permissions.administrator and not get_leader_guild(ctx):
-        return await ctx.send('❌ Только глава гильдии или администратор может менять расписание.')
+    if not ctx.author.guild_permissions.administrator and not is_guildmaster(ctx.author) and not get_leader_guild(ctx):
+        return await ctx.send('❌ Только глава гильдии, гильдмастер или администратор может менять расписание.')
     leader_guild = get_leader_guild(ctx)
+    if is_guildmaster(ctx.author) and not leader_guild and not ctx.author.guild_permissions.administrator:
+        return await ctx.send(embed=discord.Embed(title='⚙️ Выбор гильдии', description='Гильдмастер может настроить расписание любой гильдии.', color=discord.Color.blue()), view=AdminGuildSelectView(ctx.author.id, 'schedule'))
     initial_guild = leader_guild or GUILD_NAMES[0]
     view = QuestScheduleMenu(ctx.author.id, initial_guild)
     await ctx.send(embed=view.make_embed(), view=view)
