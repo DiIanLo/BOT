@@ -593,6 +593,8 @@ def get_user_role(ctx: commands.Context) -> str:
 
 
 def get_leader_guild(ctx: commands.Context) -> Optional[str]:
+    if is_guildmaster(ctx.author):
+        return get_guild_from_category(ctx)
     if not hasattr(ctx.author, 'roles'): return None
     for guild, role_id in GUILD_LEADER_ROLES.items():
         if discord.utils.get(ctx.author.roles, id=role_id): return guild
@@ -2754,7 +2756,8 @@ def build_main_menu_view(member) -> discord.ui.View:
     """Каталог вкладок без старых дублирующих кнопок."""
     view = MainMenuView(member.id)
     member_guild = get_leader_guild_from_member(member)
-    has_global_access = bool(getattr(getattr(member, 'guild_permissions', None), 'administrator', False) or is_guildmaster(member))
+    is_admin = bool(getattr(getattr(member, 'guild_permissions', None), 'administrator', False))
+    has_global_access = is_admin or is_guildmaster(member)
     add_directory_button(view, member, '👤 Личный кабинет', 0)
     add_directory_button(view, member, '🏦 Банк', 0)
     add_directory_button(view, member, '💳 Кредиты', 0)
@@ -2764,7 +2767,7 @@ def build_main_menu_view(member) -> discord.ui.View:
         add_directory_button(view, member, '🎯 Квесты', 1)
     if _member_in_guild(member, 'СОБР') or has_global_access:
         add_directory_button(view, member, '🛡️ СОБР', 1)
-    if has_global_access:
+    if is_admin:
         add_directory_button(view, member, '⚙️ Администрирование', 2)
     help_button = discord.ui.Button(label='📚 Справка', style=discord.ButtonStyle.secondary, row=2)
     async def help_callback(interaction: discord.Interaction):
@@ -3069,8 +3072,10 @@ class CommandActionModal(discord.ui.Modal):
 
 def _menu_visible_commands(member, group_name: str):
     names = list(MENU_COMMAND_GROUPS[group_name])
-    is_admin = bool(getattr(getattr(member, 'guild_permissions', None), 'administrator', False) or is_guildmaster(member))
+    is_admin = bool(getattr(getattr(member, 'guild_permissions', None), 'administrator', False))
     if is_admin:
+        return names
+    if is_guildmaster(member) and group_name in {'🏛️ Гильдия', '🎯 Квесты'}:
         return names
     is_trader = _member_in_guild(member, 'торговцы')
     is_trader_leader = bool(discord.utils.get(getattr(member, 'roles', []), id=GUILD_LEADER_ROLES['торговцы']))
