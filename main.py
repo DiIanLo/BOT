@@ -742,6 +742,13 @@ def apply_quest_completion(player: Dict[str, Any], quest: Dict[str, Any], partic
                            confirmed_by: int, confirmed_at: str) -> Dict[str, Any]:
     """Выдаёт процентный бонус всегда, а предметную награду только регистрирует к выдаче."""
     player['quest_bonus'] = float(player.get('quest_bonus', 0.0)) + float(quest.get('bonus', 0.0))
+    rank_diff = max(0, min(2, int(participant.get('rank_diff', 0) or 0)))
+    difficulty_bonus = RANK_DIFF_BONUS.get(rank_diff, 0)
+    if difficulty_bonus:
+        rank = str(player.get('rank', 'F')).upper()
+        base = float(player.get('weekly_salary_base', RANK_COEFFICIENTS.get(rank, 1.0) * max(0, int(player.get('completed_tasks', 0) or 0))))
+        player['weekly_salary_base'] = base + RANK_COEFFICIENTS.get(rank, 1.0) * difficulty_bonus / 100
+    participant['difficulty_bonus_percent'] = difficulty_bonus
     player['lifetime_quests_completed'] = int(player.get('lifetime_quests_completed', 0) or 0) + 1
     reward = quest_reward_config(quest)
     participant.update({'status': 'confirmed', 'confirmed_at': confirmed_at, 'confirmed_by': confirmed_by})
@@ -943,11 +950,13 @@ async def _close_scheduled_quests(guild_name: str, quest_type: str, period_key: 
         for uid, participant in data.get('player_quests', {}).get(qid, {}).items():
             if participant.get('status') != 'taken':
                 continue
-            penalty = max(0.0, float(quest.get('bonus', 0) or 0) / 2)
             player = data.get('players', {}).get(uid)
+            rank = str(quest.get('rank', 'F')).upper()
+            rank_diff = int(participant.get('rank_diff', get_rank_diff(str(player.get('rank', 'F')).upper(), rank) if player else 0) or 0)
+            penalty = calculate_penalty(rank, rank_diff)
             if player:
-                player['quest_bonus'] = max(0.0, float(player.get('quest_bonus', 0.0)) - penalty)
-            participant.update({'status': 'overdue', 'penalty_applied': penalty,
+                player['rank_points'] = max(0, int(player.get('rank_points', 0) or 0) - penalty)
+            participant.update({'status': 'overdue', 'penalty_applied': penalty, 'penalty_points': penalty,
                                 'overdue_at': now_msk().isoformat(), 'closed_by_schedule': True})
         thread = await _resolve_channel(quest.get('thread_id', 0)) if quest.get('thread_id') else None
         if isinstance(thread, discord.Thread):
@@ -1088,15 +1097,17 @@ async def check_overdue_quests():
             except:
                 continue
             if now > taken_at + timedelta(minutes=quest_data['time_limit_minutes']):
-                penalty = max(0.0, float(quest_data.get('bonus', 0) or 0)) / 2
                 player = data.get('players', {}).get(user_id)
+                rank = str(quest_data.get('rank', 'F')).upper()
+                rank_diff = int(pq.get('rank_diff', get_rank_diff(str(player.get('rank', 'F')).upper(), rank) if player else 0) or 0)
+                penalty = calculate_penalty(rank, rank_diff)
                 if player:
-                    player['quest_bonus'] = max(0, player.get('quest_bonus', 0.0) - penalty)
-                    pq['status'], pq['penalty_applied'], pq['overdue_at'] = 'overdue', penalty, now.isoformat()
+                    player['rank_points'] = max(0, int(player.get('rank_points', 0) or 0) - penalty)
+                    pq['status'], pq['penalty_applied'], pq['penalty_points'], pq['overdue_at'] = 'overdue', penalty, penalty, now.isoformat()
                     changed = True
                     try:
                         if u := await bot.fetch_user(int(user_id)): await u.send(
-                            f'⏰ **Квест просрочен!**\n**{quest_data["name"]}**\nШтраф: -{penalty}%')
+                            f'⏰ **Квест просрочен!**\n**{quest_data["name"]}**\nШтраф: -{penalty} очков ранга')
                     except:
                         pass
     if changed: save_data()
@@ -3234,11 +3245,13 @@ async def quest_confirm(ctx, quest_id: str, nick: str):
         except (KeyError, ValueError, TypeError):
             return await ctx.send('❌ Не удалось проверить срок квеста. Проверьте данные.')
         if now_msk() > deadline:
-            penalty = max(0.0, float(quest.get('bonus', 0) or 0)) / 2
-            player['quest_bonus'] = max(0.0, float(player.get('quest_bonus', 0.0)) - penalty)
-            participant.update({'status': 'overdue', 'penalty_applied': penalty, 'overdue_at': now_msk().isoformat()})
+            rank = str(quest.get('rank', 'F')).upper()
+            rank_diff = int(participant.get('rank_diff', get_rank_diff(str(player.get('rank', 'F')).upper(), rank)) or 0)
+            penalty = calculate_penalty(rank, rank_diff)
+            player['rank_points'] = max(0, int(player.get('rank_points', 0) or 0) - penalty)
+            participant.update({'status': 'overdue', 'penalty_applied': penalty, 'penalty_points': penalty, 'overdue_at': now_msk().isoformat()})
             save_data()
-            return await ctx.send(f'⏰ Срок квеста истёк. Игрок **{player["minecraft_nick"]}** отмечен как просрочивший; штраф: −{penalty:g}% к бонусу.')
+            return await ctx.send(f'⏰ Срок квеста истёк. Игрок **{player["minecraft_nick"]}** отмечен как просрочивший; штраф: −{penalty} очков ранга.')
     # Статус меняется до сохранения бонуса, повторная команда не сможет начислить награду.
     now_iso = now_msk().isoformat()
     reward = apply_quest_completion(player, quest, participant, ctx.author.id, now_iso)
@@ -3395,9 +3408,11 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
                 continue
             limit = quest.get('time_limit_minutes')
             if limit and now > taken_at + timedelta(minutes=int(limit)):
-                penalty = float(quest.get('bonus', 0)) / 2
-                p['quest_bonus'] = max(0.0, float(p.get('quest_bonus', 0.0)) - penalty)
-                pq.update({'status': 'overdue', 'penalty_applied': penalty, 'overdue_at': now.isoformat()})
+                rank = str(quest.get('rank', 'F')).upper()
+                rank_diff = int(pq.get('rank_diff', get_rank_diff(str(p.get('rank', 'F')).upper(), rank)) or 0)
+                penalty = calculate_penalty(rank, rank_diff)
+                p['rank_points'] = max(0, int(p.get('rank_points', 0) or 0) - penalty)
+                pq.update({'status': 'overdue', 'penalty_applied': penalty, 'penalty_points': penalty, 'overdue_at': now.isoformat()})
                 continue
             reward = apply_quest_completion(p, quest, pq, payload.user_id, now.isoformat())
             newly = refresh_player_progress(p)

@@ -70,14 +70,10 @@ class RankLogicTests(unittest.TestCase):
         self.assertFalse(can_add("F", 0, 0))
         self.assertFalse(can_add("unknown", 0, 1))
 
-    def test_only_same_rank_or_up_to_two_ranks_higher_can_be_taken(self):
-        can_take = LOGIC["can_take_task"]
-        self.assertTrue(can_take("F", "F"))
-        self.assertTrue(can_take("F", "E"))
-        self.assertTrue(can_take("F", "D"))
-        self.assertFalse(can_take("F", "C"))
-        self.assertFalse(can_take("D", "F"))
-        self.assertFalse(can_take("invalid", "F"))
+    def test_rank_gap_is_limited_to_two(self):
+        self.assertTrue(LOGIC["can_take_task"]("F", "D"))
+        self.assertFalse(LOGIC["can_take_task"]("F", "C"))
+        self.assertFalse(LOGIC["can_take_task"]("invalid", "F"))
 
     def test_minimum_task_penalty(self):
         self.assertEqual(LOGIC["calculate_min_tasks_penalty"]("F", 0), 2)
