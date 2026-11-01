@@ -122,3 +122,24 @@ def test_quest_rank_is_saved_and_checked_when_taking_a_quest():
     assert "quest_rank = str(quest.get('rank', 'F')).upper()" in source
     assert "can_take_task(player_rank, quest_rank)" in source
     assert "'failure_penalty_multiplier': PENALTY_DIFF_MULTIPLIER.get(rank_gap, 1.0)" in source
+
+
+def test_guildmaster_can_open_guild_and_quest_tabs_but_not_admin_tab():
+    source = (Path(__file__).resolve().parents[1] / "main.py").read_text(encoding="utf-8")
+    start = source.index("def add_directory_button(")
+    end = source.index("@bot.command(name='quest_create')", start)
+    callback = source[start:end]
+    assert "is_guildmaster(interaction.user)" in callback
+    assert "group_name == '🏛️ Гильдия'" in callback
+    assert "group_name == '🎯 Квесты'" in callback
+    assert "group_name == '⚙️ Администрирование' and not interaction.user.guild_permissions.administrator" in callback
+    assert "if _member_in_guild(member, 'СОБР') or is_admin:" in source
+
+
+def test_guildmaster_can_manage_quest_templates():
+    source = (Path(__file__).resolve().parents[1] / "main.py").read_text(encoding="utf-8")
+    for command_name in ("template_add", "template_reward", "template_delete"):
+        start = source.index(f"@bot.command(name='{command_name}')")
+        next_command = source.find("@bot.command(", start + 1)
+        block = source[start:next_command if next_command >= 0 else len(source)]
+        assert "is_guildmaster(ctx.author)" in block

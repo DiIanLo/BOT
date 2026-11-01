@@ -2249,7 +2249,7 @@ class QuestModeView(AuthorizedView):
 @bot.command(name='template_add')
 async def template_add(ctx):
     if not ctx.guild: return await ctx.send('❌ Команда доступна только на сервере Discord.')
-    if not get_leader_guild(ctx) and not ctx.author.guild_permissions.administrator: return await ctx.send(
+    if not get_leader_guild(ctx) and not ctx.author.guild_permissions.administrator and not is_guildmaster(ctx.author): return await ctx.send(
         '❌ Только для глав/админов!')
     view = AuthorizedView(creator_id=ctx.author.id, any_guild=True, timeout=120)
     btn = discord.ui.Button(label='➕ Создать шаблон', style=discord.ButtonStyle.success)
@@ -2281,8 +2281,8 @@ async def template_reward(ctx, template_id: str, diamonds: str, xp: str):
     """Настраивает предметную награду шаблона, в том числе для автоквестов."""
     if not ctx.guild:
         return await ctx.send('❌ Команда доступна только на сервере Discord.')
-    if not ctx.author.guild_permissions.administrator and not get_leader_guild(ctx):
-        return await ctx.send('❌ Только для глав/админов!')
+    if not ctx.author.guild_permissions.administrator and not is_guildmaster(ctx.author) and not get_leader_guild(ctx):
+        return await ctx.send('❌ Только для глав/гильдмастера/админов!')
     resolved_id = next((tid for tid in quest_templates if tid.casefold() == template_id.casefold()), None)
     if not resolved_id:
         return await ctx.send('❌ Шаблон не найден. Используйте `.template_list`.')
@@ -2298,7 +2298,7 @@ async def template_reward(ctx, template_id: str, diamonds: str, xp: str):
 @bot.command(name='template_delete')
 async def template_delete(ctx, template_id: str = None):
     if not ctx.guild: return await ctx.send('❌ Команда доступна только на сервере Discord.')
-    if not ctx.author.guild_permissions.administrator and not get_leader_guild(ctx): return await ctx.send(
+    if not ctx.author.guild_permissions.administrator and not is_guildmaster(ctx.author) and not get_leader_guild(ctx): return await ctx.send(
         '❌ Только для глав/админов!')
     if template_id:
         t = get_template(template_id)
@@ -2765,7 +2765,7 @@ def build_main_menu_view(member) -> discord.ui.View:
         add_directory_button(view, member, '🏛️ Гильдия', 1)
     if member_guild or has_global_access or any(_member_in_guild(member, name) for name in GUILD_NAMES):
         add_directory_button(view, member, '🎯 Квесты', 1)
-    if _member_in_guild(member, 'СОБР') or has_global_access:
+    if _member_in_guild(member, 'СОБР') or is_admin:
         add_directory_button(view, member, '🛡️ СОБР', 1)
     if is_admin:
         add_directory_button(view, member, '⚙️ Администрирование', 2)
@@ -3211,10 +3211,10 @@ def add_directory_button(view: discord.ui.View, member, group_name: str, row: in
         if group_name == '⚙️ Администрирование' and not interaction.user.guild_permissions.administrator:
             return await interaction.response.send_message('❌ Раздел доступен только администраторам.', ephemeral=True)
         if group_name == '🏛️ Гильдия' and not (
-            interaction.user.guild_permissions.administrator or any(_member_in_guild(interaction.user, g) for g in GUILD_NAMES)):
+            interaction.user.guild_permissions.administrator or is_guildmaster(interaction.user) or any(_member_in_guild(interaction.user, g) for g in GUILD_NAMES)):
             return await interaction.response.send_message('❌ Раздел доступен участникам гильдий и администраторам.', ephemeral=True)
         if group_name == '🎯 Квесты' and not (
-            interaction.user.guild_permissions.administrator or get_leader_guild_from_member(interaction.user)):
+            interaction.user.guild_permissions.administrator or is_guildmaster(interaction.user) or get_leader_guild_from_member(interaction.user)):
             return await interaction.response.send_message('❌ Управление квестами доступно главам гильдий и администраторам.', ephemeral=True)
         if group_name == '🛡️ СОБР' and not _member_in_guild(interaction.user, 'СОБР'):
             return await interaction.response.send_message('❌ Раздел доступен участникам СОБР.', ephemeral=True)
