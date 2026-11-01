@@ -3401,8 +3401,11 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
             channel = bot.get_channel(payload.channel_id)
             if not isinstance(channel, discord.Thread) or channel.parent_id != expected_board:
                 return
-        if not (lg := next((g for g, rid in GUILD_LEADER_ROLES.items() if discord.utils.get(member.roles, id=rid)),
-                           None)) or lg != quest['guild']: return
+        if not is_guildmaster(member):
+            leader_guild = next((g for g, rid in GUILD_LEADER_ROLES.items()
+                                 if discord.utils.get(member.roles, id=rid)), None)
+            if leader_guild != quest['guild']:
+                return
         if quest.get('mode', 'group') != 'group':
             try:
                 channel = bot.get_channel(payload.channel_id)
