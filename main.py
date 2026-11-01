@@ -1998,7 +1998,7 @@ class TemplateCreateModal(discord.ui.Modal, title='Создание квеста
             type_label = {'weekly': '📅 Еженед.', 'daily': '📆 Ежедн.', 'once': '🎯 Разовый'}[quest_type]
             title = f"{type_label} | {payload['name']}"
             body = (f"🆔 **ID квеста: `{qid}`**\n\n🎯 **{payload['name']}**\n\n{payload['description']}\n\n"
-                    f"💼 **Бонус к зарплате:** +{bonus:g}%\n⏰ **Срок:** {format_duration(time_limit)}\n"
+                    f"🔰 **Ранг задания:** {rank}\n💼 **Бонус к зарплате:** +{bonus:g}%\n⏰ **Срок:** {format_duration(time_limit)}\n"
                     f"{quest_reward_label(reward)}\n\nПоставьте {QUEST_TAKE_REACTION}, чтобы взять!")
             thread, msg = await create_forum_post(board, title, body)
             data['quests'][qid] = {**payload, 'created_at': now_msk().isoformat(), 'thread_id': thread.id,
