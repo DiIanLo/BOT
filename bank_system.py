@@ -22,6 +22,7 @@ from bank_logic import (
     deposit_interest,
     deposit_maturity,
     early_deposit_payout,
+    summarize_transactions,
 )
 
 ACCOUNTS_FILE = "bank_accounts.json"
@@ -280,12 +281,20 @@ def setup_bank_system(
         accrue_account(account)
         if account["mode"] == "no_topups" and int(account.get("balance", 0)) > 0:
             return await ctx.send("❌ Этот счёт открыт без пополнений. После первоначального взноса дополнительные пополнения запрещены.")
+        source_ref = f"savings-deposit:{account['id']}:{now_msk().isoformat(timespec='seconds')}:{ctx.author.id}"
+        try:
+            posted = apply_treasury_cash_movement(treasury, source_ref, amount)
+            if not posted:
+                return await ctx.send("❌ Эта операция уже отмечена в казне; повторное зачисление отменено.")
+        except (TypeError, ValueError) as exc:
+            return await ctx.send(f"❌ Пополнение не записано в казну: {exc}")
         account["balance"] = int(account.get("balance", 0)) + amount
         account["status"] = "active"
         account["last_visit_at"] = now_msk().isoformat(timespec="seconds")
         account["last_accrual_at"] = account["last_visit_at"]
         save_accounts()
-        transaction("savings_deposit", amount, ctx.author.id, note or "Пополнение накопительного счёта после физической передачи", owner_id=str(member.id), source_ref=f"savings-deposit:{account['id']}:{now_msk().isoformat(timespec='seconds')}:{ctx.author.id}")
+        save_treasury()
+        transaction("savings_deposit", amount, ctx.author.id, note or "Пополнение накопительного счёта после физической передачи", owner_id=str(member.id), source_ref=source_ref)
         await ctx.send(f"✅ Пополнение счёта **#{account['id']}** на {amount} алмазов записано. Новый остаток: {account['balance']}.")
 
     @bot.command(name="savings_withdraw")
@@ -297,6 +306,13 @@ def setup_bank_system(
         accrue_account(account)
         if int(account.get("balance", 0)) - amount < 100:
             return await ctx.send("❌ После снятия на счёте должно остаться не менее 100 алмазов.")
+        source_ref = f"savings-withdraw:{account['id']}:{now_msk().isoformat(timespec='seconds')}:{ctx.author.id}"
+        try:
+            posted = apply_treasury_cash_movement(treasury, source_ref, -amount)
+            if not posted:
+                return await ctx.send("❌ Эта операция уже отмечена в казне; повторная выплата отменена.")
+        except (TypeError, ValueError) as exc:
+            return await ctx.send(f"❌ Снятие не выполнено: {exc}")
         old_rate = float(account["rate"])
         account["balance"] = int(account["balance"]) - amount
         account["rate"] = max(SAVINGS_RATE_FLOOR, round(old_rate - SAVINGS_WITHDRAWAL_RATE_STEP, 8))
@@ -306,7 +322,8 @@ def setup_bank_system(
         save_accounts()
         transaction("savings_withdrawal", amount, ctx.author.id,
                     f"Снятие; ставка снижена с {old_rate:.2%} до {account['rate']:.2%}. {note}",
-                    owner_id=str(member.id), source_ref=f"savings-withdraw:{account['id']}:{now_msk().isoformat(timespec='seconds')}:{ctx.author.id}")
+                    owner_id=str(member.id), source_ref=source_ref)
+        save_treasury()
         await ctx.send(f"✅ Снятие {amount} алмазов со счёта **#{account['id']}** записано. Остаток: {account['balance']}; новая ставка: {account['rate']:.2%} в месяц.")
 
     @bot.command(name="savings_visit")
@@ -337,6 +354,15 @@ def setup_bank_system(
         deposits["next_id"] += 1
         maturity = deposit_maturity(now, term)
         interest = deposit_interest(amount, term)
+        source_ref = f"deposit-open:{did}"
+        try:
+            posted = apply_treasury_cash_movement(treasury, source_ref, amount)
+            if not posted:
+                deposits["next_id"] -= 1
+                return await ctx.send("❌ Номер вклада уже присутствует в журнале казны. Операция остановлена для ручной сверки.")
+        except (TypeError, ValueError) as exc:
+            deposits["next_id"] -= 1
+            return await ctx.send(f"❌ Вклад не открыт: {exc}")
         deposits["deposits"][did] = {"id": did, "owner_id": str(member.id), "minecraft_nick": member_nick(str(member.id)),
             "principal": amount, "term": term, "rate": DEPOSIT_TERMS[term]["rate"], "contractual_interest": interest,
             "opened_at": now.isoformat(timespec="seconds"), "matures_at": maturity.isoformat(timespec="seconds"),
@@ -344,7 +370,8 @@ def setup_bank_system(
         save_deposits()
         transaction("fixed_deposit_opened", amount, ctx.author.id,
                     f"Открыт срочный вклад #{did}, срок {DEPOSIT_TERMS[term]['label']}, ставка {DEPOSIT_TERMS[term]['rate']:.2%}; физическое получение алмазов подтверждено",
-                    owner_id=str(member.id), source_ref=f"deposit-open:{did}")
+                    owner_id=str(member.id), source_ref=source_ref)
+        save_treasury()
         await ctx.send(f"✅ Срочный вклад **#{did}** оформлен для {member.mention}: **{amount} алмазов**, срок {DEPOSIT_TERMS[term]['label']}, ставка {DEPOSIT_TERMS[term]['rate']:.2%} за весь срок. Погашение: `{maturity.isoformat(timespec='seconds')} МСК`. Операция предполагает, что сотрудник уже проверил физическую передачу алмазов.")
 
     @bot.command(name="deposit_status")
@@ -372,11 +399,12 @@ def setup_bank_system(
         payout = int(dep["principal"]) + int(dep.get("contractual_interest", 0))
         interest = int(dep.get("contractual_interest", 0))
         source_ref = f"deposit-payout:{deposit_id}"
-        if source_ref not in treasury.get("posted_sources", []):
-            if int(treasury.get("treasury_balance", 0)) < interest:
-                return await ctx.send(f"❌ В казне недостаточно свободных средств для выплаты процентов: требуется {interest} алмазов. Пополните казну или переведите средства из резерва.")
-            treasury["treasury_balance"] = int(treasury.get("treasury_balance", 0)) - interest
-            treasury.setdefault("posted_sources", []).append(source_ref)
+        try:
+            posted = apply_treasury_cash_movement(treasury, source_ref, -payout)
+            if not posted:
+                return await ctx.send("❌ Выплата по этому вкладу уже отмечена в казне; повторная выплата отменена.")
+        except (TypeError, ValueError) as exc:
+            return await ctx.send(f"❌ Выплата не выполнена: {exc} Казна должна покрывать всю сумму, включая возвращаемый основной капитал.")
         dep.update({"status": "paid", "paid_at": now_msk().isoformat(timespec="seconds"), "paid_by": str(ctx.author.id), "payout": payout})
         save_deposits(); save_treasury()
         transaction("fixed_deposit_payout", payout, ctx.author.id, f"Погашен вклад #{deposit_id}; проценты {interest}; {note}", owner_id=dep["owner_id"], source_ref=source_ref)
@@ -391,9 +419,12 @@ def setup_bank_system(
         payout = early_deposit_payout(int(dep["principal"]))
         retained = int(dep["principal"]) - payout
         source_ref = f"deposit-early:{deposit_id}"
-        if source_ref not in treasury.get("posted_sources", []):
-            treasury["treasury_balance"] = int(treasury.get("treasury_balance", 0)) + retained
-            treasury.setdefault("posted_sources", []).append(source_ref)
+        try:
+            posted = apply_treasury_cash_movement(treasury, source_ref, -payout)
+            if not posted:
+                return await ctx.send("❌ Досрочная выплата уже отмечена в казне; повторная выплата отменена.")
+        except (TypeError, ValueError) as exc:
+            return await ctx.send(f"❌ Досрочная выплата не выполнена: {exc}")
         dep.update({"status": "early_closed", "closed_at": now_msk().isoformat(timespec="seconds"), "closed_by": str(ctx.author.id), "payout": payout, "retained_amount": retained})
         save_deposits(); save_treasury()
         transaction("fixed_deposit_early_payout", payout, ctx.author.id, f"Досрочное закрытие вклада #{deposit_id}; удержано {retained}; {note}", owner_id=dep["owner_id"], source_ref=source_ref)
@@ -499,9 +530,10 @@ def setup_bank_system(
         now = now_msk()
         since = now - timedelta(days=7) if period == "week" else now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         rows = [r for r in transactions["transactions"] if datetime.fromisoformat(r["at"]) >= since and r.get("status") == "confirmed"]
-        incoming = sum(int(r["amount"]) for r in rows if r["type"] in {"treasury_topup", "credit_repayment"})
-        expenses = sum(int(r["amount"]) for r in rows if r["type"] in {"treasury_expense", "credit_issued"})
-        interest_paid = sum(int(r["amount"]) for r in rows if r["type"] == "savings_interest")
+        totals = summarize_transactions(rows)
+        incoming = totals["incoming"]
+        expenses = totals["expenses"]
+        interest_paid = totals["savings_interest"]
         await ctx.send(f"**Отчёт за {'7 дней' if period == 'week' else '30 дней'}**\n"
             f"Поступления в казну и погашения кредитов: {incoming} алмазов\n"
             f"Расходы и выданные кредиты: {expenses} алмазов\n"

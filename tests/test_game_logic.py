@@ -70,10 +70,14 @@ class RankLogicTests(unittest.TestCase):
         self.assertFalse(can_add("F", 0, 0))
         self.assertFalse(can_add("unknown", 0, 1))
 
-    def test_rank_gap_is_limited_to_two(self):
-        self.assertTrue(LOGIC["can_take_task"]("F", "D"))
-        self.assertFalse(LOGIC["can_take_task"]("F", "C"))
-        self.assertFalse(LOGIC["can_take_task"]("invalid", "F"))
+    def test_only_same_rank_or_up_to_two_ranks_higher_can_be_taken(self):
+        can_take = LOGIC["can_take_task"]
+        self.assertTrue(can_take("F", "F"))
+        self.assertTrue(can_take("F", "E"))
+        self.assertTrue(can_take("F", "D"))
+        self.assertFalse(can_take("F", "C"))
+        self.assertFalse(can_take("D", "F"))
+        self.assertFalse(can_take("invalid", "F"))
 
     def test_minimum_task_penalty(self):
         self.assertEqual(LOGIC["calculate_min_tasks_penalty"]("F", 0), 2)
@@ -136,6 +140,14 @@ class QuestRewardTests(unittest.TestCase):
         self.assertEqual(participant["reward_diamonds"], 64)
         self.assertEqual(participant["reward_xp"], 120)
         self.assertEqual(player["quest_bonus"], 8)
+
+    def test_higher_rank_quest_adds_existing_difficulty_bonus_to_salary_base(self):
+        player = {"rank": "F", "completed_tasks": 2, "weekly_salary_base": 4.0, "quest_bonus": 0}
+        quest = {"bonus": 5, "rank": "D", "reward_diamonds": 0, "reward_xp": 0}
+        participant = {"status": "taken", "rank_diff": 2}
+        LOGIC["apply_quest_completion"](player, quest, participant, 123, "2026-10-22T10:00:00")
+        self.assertAlmostEqual(player["weekly_salary_base"], 5.6)
+        self.assertEqual(participant["difficulty_bonus_percent"], 80)
 
     def test_reward_pair_validation(self):
         parse = LOGIC["parse_reward_pair"]

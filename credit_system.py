@@ -7,6 +7,13 @@ from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, Optional
 from discord.ext import commands, tasks
 import discord
+from credit_logic import (
+    accrue_interest,
+    build_principal_schedule,
+    calibrated_daily_rate,
+    due_offsets as credit_due_offsets,
+    weighted_principal_days as credit_weighted_principal_days,
+)
 
 TERMS = {7: {"min": 448, "max": 700, "target_rate": 0.10},
          14: {"min": 896, "max": 3200, "target_rate": 0.15},
@@ -80,35 +87,16 @@ def setup_credit_system(bot, data, is_registered: Callable[[str], bool], leader_
         return creditors["limits"].get(str(term), {"min": TERMS[term]["min"], "max": TERMS[term]["max"]})
 
     def due_offsets(term):
-        if term == 7: return [timedelta(hours=24 * i) for i in range(1, 8)]
-        if term == 14: return [timedelta(hours=84 * i) for i in range(1, 5)]
-        return [timedelta(days=7), timedelta(days=14), timedelta(days=21), timedelta(days=30)]
+        return credit_due_offsets(term)
 
     def weighted_principal_days(term):
-        # Calibrate the daily rate against equal principal installments and the agreed schedule.
-        offsets = due_offsets(term)
-        prev = 0.0
-        bal_fraction = 1.0
-        total = 0.0
-        principal_fraction = 1.0 / len(offsets)
-        for off in offsets:
-            day = off.total_seconds() / 86400.0
-            interval_days = day - prev
-            total += bal_fraction * interval_days
-            bal_fraction = max(0.0, bal_fraction - principal_fraction)
-            prev = day
-        return max(total, 1.0)
+        return credit_weighted_principal_days(term)
 
     def calibrated_rate(term):
-        return TERMS[term]["target_rate"] / weighted_principal_days(term)
+        return calibrated_daily_rate(term, TERMS[term]["target_rate"])
 
     def accrue(loan, at):
-        last = datetime.fromisoformat(loan["last_interest_at"])
-        elapsed_days = int((at - last).total_seconds() // 86400)
-        if elapsed_days > 0 and loan.get("principal_remaining", 0) > 0:
-            loan["interest_accrued"] = round(float(loan.get("interest_accrued", 0)) +
-                float(loan["principal_remaining"]) * float(loan["daily_rate"]) * elapsed_days, 6)
-            loan["last_interest_at"] = (last + timedelta(days=elapsed_days)).isoformat(timespec="seconds")
+        accrue_interest(loan, at)
 
     def next_due(loan):
         idx = int(loan.get("installments_paid", 0))
@@ -182,12 +170,8 @@ def setup_credit_system(bot, data, is_registered: Callable[[str], bool], leader_
         if get_active_loan(uid): return await ctx.send("❌ У заёмщика уже есть активный кредит.")
         if not creditors["users"].get(uid, {}).get("passport_verified"):
             return await ctx.send("❌ Паспорт больше не подтверждён; заявку нельзя одобрить.")
-        created = now_msk(); offsets = due_offsets(term); n = len(offsets)
-        base_part = amount // n; rem = amount - base_part * n
-        schedule = []
-        for i, offset in enumerate(offsets):
-            principal_part = base_part + (rem if i == n - 1 else 0)
-            schedule.append({"due_at": (created + offset).isoformat(timespec="seconds"), "principal": principal_part, "paid": False})
+        created = now_msk()
+        schedule = build_principal_schedule(amount, term, created)
         loan_id = str(loans["next_loan_id"]); loans["next_loan_id"] += 1
         loans["loans"][loan_id] = {"id": loan_id, "application_id": app_id, "borrower_id": uid,
             "minecraft_nick": app["minecraft_nick"], "principal_original": amount, "principal_remaining": amount,
@@ -215,16 +199,7 @@ def setup_credit_system(bot, data, is_registered: Callable[[str], bool], leader_
             return await ctx.send("❌ Не удалось подключить учёт казны; выдача не подтверждена.")
         issued = now_msk()
         term = int(loan["term_days"])
-        offsets = due_offsets(term)
-        n = len(offsets)
-        principal = int(loan["principal_original"])
-        base_part = principal // n
-        rem = principal - base_part * n
-        loan["schedule"] = []
-        for i, offset in enumerate(offsets):
-            principal_part = base_part + (rem if i == n - 1 else 0)
-            loan["schedule"].append({"due_at": (issued + offset).isoformat(timespec="seconds"),
-                                     "principal": principal_part, "paid": False})
+        loan["schedule"] = build_principal_schedule(int(loan["principal_original"]), term, issued)
         loan["issued_at"] = issued.isoformat(timespec="seconds")
         loan["last_interest_at"] = issued.isoformat(timespec="seconds")
         loan["status"] = "active"

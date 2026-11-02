@@ -52,3 +52,94 @@ def test_every_menu_command_has_a_description_and_all_guild_guides_exist():
     assert commands_in_menu == set(assignments["MENU_ACTION_HELP"])
     assert set(assignments["GUILD_GUIDES"]) == {"шахтёры", "архитекторы", "торговцы", "СОБР"}
     assert all(len(title) > 0 and len(body) > 300 for title, body in assignments["GUILD_GUIDES"].values())
+
+
+def test_main_menu_reuses_existing_message_and_removes_duplicate_panels():
+    root = Path(__file__).resolve().parents[1]
+    tree = ast.parse((root / "main.py").read_text(encoding="utf-8"))
+    functions = {
+        node.name: node for node in ast.walk(tree)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    upsert = functions["_upsert_main_menu"]
+    source = ast.get_source_segment((root / "main.py").read_text(encoding="utf-8"), upsert)
+    assert "ctx.channel.history(limit=100)" in source
+    assert "primary.edit" in source
+    assert "duplicate.delete()" in source
+    menu = functions["main_menu"]
+    menu_source = ast.get_source_segment((root / "main.py").read_text(encoding="utf-8"), menu)
+    assert "_upsert_main_menu(ctx)" in menu_source
+    assert "ctx.send(embed=build_main_menu_embed" not in menu_source
+
+
+def test_main_menu_view_does_not_add_legacy_placeholder_controls():
+    root = Path(__file__).resolve().parents[1]
+    tree = ast.parse((root / "main.py").read_text(encoding="utf-8"))
+    view = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "MainMenuView")
+    assert not any(
+        isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "add_item"
+        for node in ast.walk(view)
+    )
+
+
+def test_menu_context_proxy_does_not_mix_embed_and_embeds_keywords():
+    root = Path(__file__).resolve().parents[1]
+    source = (root / "main.py").read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    proxy = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "_MenuContextProxy")
+    send = next(node for node in proxy.body if isinstance(node, ast.AsyncFunctionDef) and node.name == "send")
+    segment = ast.get_source_segment(source, send)
+    assert 'payload["embed"] = embed' in segment
+    assert 'payload["embeds"] = embeds' in segment
+    assert "send_message(**payload)" in segment
+    assert "followup.send(**payload)" in segment
+    assert "embed=embed, embeds=embeds" not in segment
+
+
+def test_new_main_menu_has_no_legacy_duplicate_action_buttons():
+    source = (Path(__file__).resolve().parents[1] / "main.py").read_text(encoding="utf-8")
+    menu = source.split("def build_main_menu_view(member)", 1)[1].split("# Полный каталог команд:", 1)[0]
+    assert "cabinet = discord.ui.Button" not in menu
+    assert "myq = discord.ui.Button" not in menu
+    assert "add_directory_button(view, member, '🏦 Банк'" in menu
+    assert "add_directory_button(view, member, '💳 Кредиты'" in menu
+    assert "add_directory_button(view, member, '🛡️ СОБР'" in menu
+    assert "📖 Гайды гильдий" in menu
+
+
+def test_guildmaster_is_a_separate_role_and_can_manage_all_guilds():
+    source = (Path(__file__).resolve().parents[1] / "main.py").read_text(encoding="utf-8")
+    assert "GUILDMASTER_ROLE_NAME = 'Гильдмастер'" in source
+    assert "def is_guildmaster(member)" in source
+    assert "is_guildmaster(interaction.user)" in source
+    assert "is_guildmaster(ctx.author)" in source
+
+
+def test_quest_rank_is_saved_and_checked_when_taking_a_quest():
+    source = (Path(__file__).resolve().parents[1] / "main.py").read_text(encoding="utf-8")
+    assert "'rank': rank" in source
+    assert "quest_rank = str(quest.get('rank', 'F')).upper()" in source
+    assert "can_take_task(player_rank, quest_rank)" in source
+    assert "'failure_penalty_multiplier': PENALTY_DIFF_MULTIPLIER.get(rank_gap, 1.0)" in source
+
+
+def test_guildmaster_can_open_guild_and_quest_tabs_but_not_admin_tab():
+    source = (Path(__file__).resolve().parents[1] / "main.py").read_text(encoding="utf-8")
+    start = source.index("def add_directory_button(")
+    end = source.index("@bot.command(name='quest_create')", start)
+    callback = source[start:end]
+    assert "is_guildmaster(interaction.user)" in callback
+    assert "group_name == '🏛️ Гильдия'" in callback
+    assert "group_name == '🎯 Квесты'" in callback
+    assert "group_name == '⚙️ Администрирование' and not interaction.user.guild_permissions.administrator" in callback
+    assert "if _member_in_guild(member, 'СОБР') or is_admin:" in source
+
+
+def test_guildmaster_can_manage_quest_templates():
+    source = (Path(__file__).resolve().parents[1] / "main.py").read_text(encoding="utf-8")
+    for command_name in ("template_add", "template_reward", "template_delete"):
+        start = source.index(f"@bot.command(name='{command_name}')")
+        next_command = source.find("@bot.command(", start + 1)
+        block = source[start:next_command if next_command >= 0 else len(source)]
+        assert "is_guildmaster(ctx.author)" in block
