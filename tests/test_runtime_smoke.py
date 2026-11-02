@@ -56,3 +56,26 @@ def test_bank_and_credit_commands_register_on_a_real_discord_bot(tmp_path, monke
     assert {"treasury", "savings_open", "deposit_open", "credit_apply",
             "credit_approve", "credit_issue", "credit_pay"} <= registered
     assert len(registered) == len(bot.commands)
+
+
+
+def test_get_user_role_handles_dm_user_without_guild_permissions(monkeypatch):
+    from types import SimpleNamespace
+
+    main = importlib.import_module("main")
+    monkeypatch.setattr(main, "data", {"players": {"123": {}}})
+    ctx = SimpleNamespace(author=SimpleNamespace(id=123))
+    assert main.get_user_role(ctx) == "player"
+
+
+def test_get_user_role_still_recognizes_server_administrator(monkeypatch):
+    from types import SimpleNamespace
+
+    main = importlib.import_module("main")
+    monkeypatch.setattr(main, "data", {"players": {}})
+    author = SimpleNamespace(
+        id=456,
+        guild_permissions=SimpleNamespace(administrator=True),
+        roles=[],
+    )
+    assert main.get_user_role(SimpleNamespace(author=author)) == "admin"

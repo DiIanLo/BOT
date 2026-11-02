@@ -584,7 +584,10 @@ def get_guild_from_category(ctx: commands.Context) -> Optional[str]:
 
 
 def get_user_role(ctx: commands.Context) -> str:
-    if ctx.author.guild_permissions.administrator: return 'admin'
+    # В личных сообщениях ctx.author — discord.User, у которого нет
+    # guild_permissions. Проверяем серверные права только для Member.
+    guild_permissions = getattr(ctx.author, 'guild_permissions', None)
+    if guild_permissions and guild_permissions.administrator: return 'admin'
     if is_guildmaster(ctx.author): return 'guildmaster'
     if hasattr(ctx.author, 'roles'):
         for role_id in GUILD_LEADER_ROLES.values():
